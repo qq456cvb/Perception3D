@@ -1,0 +1,5 @@
+c_cpp_properties.json
+**/__pycache__
+**/build
+**/*.so
+.vscode/
