@@ -1,11 +1,22 @@
-from . import ext
+from glob import glob
+import re
+from perceptron3d.utils import build_ext
+import os
+
+try:
+    from . import ball_query_ext
+except (ImportError, ModuleNotFoundError):
+    import cython
+    build_ext('ball_query_ext', list(filter(lambda fn: re.match(r'.+\.(cpp|cc|cu)', fn), glob(os.path.join(os.path.dirname(__file__), 'src/*')))))
+    from . import ball_query_ext
+
 import torch
 from torch.autograd import Function
 
 
 class BallQuery(Function):
     @staticmethod
-    def forward(ctx, radius, num_sample, xyz, center_xyz):
+    def forward(ctx, center_xyz, xyz, radius, num_sample):
         # type: (Any, float, int, torch.Tensor, torch.Tensor) -> torch.Tensor
         r"""
         Parameters
@@ -23,7 +34,7 @@ class BallQuery(Function):
         torch.Tensor
             (B, npoint, nsample) tensor with the indicies of the features that form the query balls
         """
-        output = ext.ball_query(center_xyz, xyz, radius, num_sample)
+        output = ball_query_ext.ball_query(center_xyz, xyz, radius, num_sample)
 
         ctx.mark_non_differentiable(output)
 
