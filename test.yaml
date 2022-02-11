@@ -1,0 +1,13 @@
+pointnet: &test
+  b: 3
+  size: 4
+
+c:
+  pn: !ENV
+    <<: *test
+    b: 2
+  modules:
+    - a
+    -
+      *test
+  d: 4
