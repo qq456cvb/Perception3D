@@ -5,14 +5,15 @@
 #include <stdlib.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include "../../common/macro.h"
 
 // input: new_xyz(b, m, 3) xyz(b, n, 3)
 // output: idx(b, m, nsample)
 template <typename scalar_t>
-__global__ void query_ball_point_kernel(torch::PackedTensorAccessor32<scalar_t, 3, torch::RestrictPtrTraits> center_xyz,
-                                        torch::PackedTensorAccessor32<scalar_t, 3, torch::RestrictPtrTraits> xyz,
-                                        torch::PackedTensorAccessor32<int64_t, 3, torch::RestrictPtrTraits> idx,
-                                        float radius, int nsample)
+__global__ void ball_query_cuda_forward_kernel(ACCESSOR(scalar_t, 3) center_xyz,
+                                               ACCESSOR(scalar_t, 3) xyz,
+                                               ACCESSOR(int64_t, 3) idx,
+                                               float radius, int nsample)
 {
     int bidx = blockIdx.x;
     int index = threadIdx.x;
@@ -49,16 +50,16 @@ __global__ void query_ball_point_kernel(torch::PackedTensorAccessor32<scalar_t, 
     }
 }
 
-torch::Tensor query_ball_kernel_wrapper(torch::Tensor center_xyz, torch::Tensor xyz, torch::Tensor idx, float radius, int nsample)
+torch::Tensor ball_query_cuda_forward(torch::Tensor center_xyz, torch::Tensor xyz, torch::Tensor idx, float radius, int nsample)
 {
     int threads_per_block = 256;
     dim3 blocks(center_xyz.size(0));
     dim3 threads((center_xyz.size(1) - 1) / threads_per_block + 1);
-    AT_DISPATCH_FLOATING_TYPES(xyz.scalar_type(), "hv_backward_cuda", ([&]
-                                                                       { query_ball_point_kernel<scalar_t><<<blocks, threads>>>(
-                                                                             center_xyz.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>(),
-                                                                             xyz.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>(),
-                                                                             idx.packed_accessor32<int64_t, 3, torch::RestrictPtrTraits>(),
-                                                                             radius, nsample); }));
+    AT_DISPATCH_FLOATING_TYPES(xyz.scalar_type(), "ball_query_cuda_forward", ([&]
+                                                                              { ball_query_cuda_forward_kernel<scalar_t><<<blocks, threads>>>(
+                                                                                    center_xyz.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>(),
+                                                                                    xyz.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>(),
+                                                                                    idx.packed_accessor32<int64_t, 3, torch::RestrictPtrTraits>(),
+                                                                                    radius, nsample); }));
     return idx;
 }

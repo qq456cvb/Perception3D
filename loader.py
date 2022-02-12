@@ -1,5 +1,6 @@
 from omegaconf import OmegaConf
 import os
+import omegaconf
 import yaml
 import torch
 
@@ -20,6 +21,7 @@ class EnvTag(object):
 
 
 def constructor(loader, node):
+    # print(node.value)
     return loader.construct_mapping(node, deep=True)
     # @classmethod
     # def to_yaml(cls, dumper, data):
@@ -33,7 +35,9 @@ yaml.SafeLoader.add_constructor('!ENV', constructor)
 from perceptron3d.ops.ball_query import ball_query
 # from setuptools import sandbox
 if __name__ == '__main__':
-    print(ball_query(torch.zeros((3, 5, 3), device='cuda'), torch.zeros((3, 3, 3), device='cuda'), 0.1, 256).shape)
+    # print(ball_query(torch.zeros((3, 5, 3), device='cuda'), torch.zeros((3, 3, 3), device='cuda'), 0.1, 256).shape)
+    conf = OmegaConf.load('test.yaml')
+    print(conf)
     # sandbox.run_setup('./setup.py', ['build_ext', '--inplace'])
     # yml = yaml.safe_load(open('test.yaml'))
     # # print(yml)

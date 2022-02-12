@@ -1,10 +1,11 @@
-import subprocess
-from setuptools import sandbox
-from torch.utils.cpp_extension import BuildExtension, CUDAExtension
+import os
 from distutils.core import run_setup
+import re
+from glob import glob
 
-def build_ext(name, src_files):
-    print(list(src_files))
+
+def build_ext(name, working_dir):
+    src_files = list(filter(lambda fn: re.match(r'.+\.(cpp|cc|cu)', fn), glob(os.path.join(working_dir, 'src/*'))))
     src = ""
     src += "from setuptools import setup\n"
     src += "from torch.utils.cpp_extension import BuildExtension, CUDAExtension\n"
@@ -23,4 +24,10 @@ def build_ext(name, src_files):
     with open('/tmp/setup.py', 'w') as f:
         f.write(src)
     # subprocess.run(['python', '/tmp/setup.py', 'build_ext', '--inplace'])
+    
+    if working_dir is not None:
+        wd = os.getcwd()
+        os.chdir(working_dir)
     run_setup('/tmp/setup.py', script_args=['build_ext', '--inplace'], stop_after='run')
+    if working_dir is not None:
+        os.chdir(wd)

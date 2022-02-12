@@ -7,7 +7,7 @@ try:
     from . import ball_query_ext
 except (ImportError, ModuleNotFoundError):
     import cython
-    build_ext('ball_query_ext', list(filter(lambda fn: re.match(r'.+\.(cpp|cc|cu)', fn), glob(os.path.join(os.path.dirname(__file__), 'src/*')))))
+    build_ext('ball_query_ext', os.path.dirname(__file__))
     from . import ball_query_ext
 
 import torch

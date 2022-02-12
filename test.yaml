@@ -1,13 +1,11 @@
-pointnet: &test
+pointnet:
   b: 3
   size: 4
 
 c:
-  pn: !ENV
-    <<: *test
-    b: 2
+  pn: 
+    $.pointnet: 
+      b: 2
   modules:
     - a
-    -
-      *test
   d: 4
