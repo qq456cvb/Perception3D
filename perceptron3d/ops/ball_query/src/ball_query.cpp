@@ -1,5 +1,5 @@
 #include <torch/extension.h>
-#include "../../common/macro.h"
+#include "../../_common/macro.h"
 
 torch::Tensor ball_query_cuda_forward(torch::Tensor center_xyz, torch::Tensor xyz, torch::Tensor idx, float radius, int nsample);
 
