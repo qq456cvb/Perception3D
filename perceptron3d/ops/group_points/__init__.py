@@ -72,12 +72,12 @@ class QueryAndGroup(nn.Module):
         Maximum number of features to gather in the ball
     """
 
-    def __init__(self, radius, nsample, use_xyz=True):
-        # type: (QueryAndGroup, float, int, bool) -> None
-        super(QueryAndGroup, self).__init__()
-        self.radius, self.nsample, self.use_xyz = radius, nsample, use_xyz
+    def __init__(self, radius, nsample, use_xyz=True, normalize_xyz=False):
+        # type: (float, float, int, bool) -> None
+        super().__init__()
+        self.radius, self.nsample, self.use_xyz, self.normalize_xyz = radius, nsample, use_xyz, normalize_xyz
 
-    def forward(self, xyz, new_xyz, features=None):
+    def forward(self, xyz, center_xyz, features=None):
         # type: (QueryAndGroup, torch.Tensor. torch.Tensor, torch.Tensor) -> Tuple[Torch.Tensor]
         r"""
         Parameters
@@ -94,26 +94,28 @@ class QueryAndGroup(nn.Module):
             (B, 3 + C, npoint, nsample) tensor
         """
 
-        idx = ball_query(self.radius, self.nsample, xyz, new_xyz)
+        idx = ball_query(xyz, center_xyz, self.radius, self.nsample)
         xyz_trans = xyz.transpose(1, 2).contiguous()
         grouped_xyz = grouping_operation(xyz_trans, idx)  # (B, 3, npoint, nsample)
-        grouped_xyz -= new_xyz.transpose(1, 2).unsqueeze(-1)
+        grouped_xyz -= center_xyz.transpose(1, 2).unsqueeze(-1)
+        if self.normalize_xyz:
+            grouped_xyz /= self.radius
 
         if features is not None:
             grouped_features = grouping_operation(features, idx)
             if self.use_xyz:
-                new_features = torch.cat(
+                center_features = torch.cat(
                     [grouped_xyz, grouped_features], dim=1
                 )  # (B, C + 3, npoint, nsample)
             else:
-                new_features = grouped_features
+                center_features = grouped_features
         else:
             assert (
                 self.use_xyz
             ), "Cannot have not features and not use xyz as a feature!"
-            new_features = grouped_xyz
+            center_features = grouped_xyz
 
-        return new_features
+        return center_features
 
 
 class GroupAll(nn.Module):
@@ -128,7 +130,7 @@ class GroupAll(nn.Module):
         super(GroupAll, self).__init__()
         self.use_xyz = use_xyz
 
-    def forward(self, xyz, new_xyz, features=None):
+    def forward(self, xyz, center_xyz, features=None):
         # type: (GroupAll, torch.Tensor, torch.Tensor, torch.Tensor) -> Tuple[torch.Tensor]
         r"""
         Parameters
@@ -149,14 +151,14 @@ class GroupAll(nn.Module):
         if features is not None:
             grouped_features = features.unsqueeze(2)
             if self.use_xyz:
-                new_features = torch.cat(
+                center_features = torch.cat(
                     [grouped_xyz, grouped_features], dim=1
                 )  # (B, 3 + C, 1, N)
             else:
-                new_features = grouped_features
+                center_features = grouped_features
         else:
-            new_features = grouped_xyz
+            center_features = grouped_xyz
 
-        return new_features
+        return center_features
     
 __all__ = ['GroupAll', 'QueryAndGroup', 'grouping_operation']

@@ -15,7 +15,7 @@ from torch.autograd import Function
 
 class BallQuery(Function):
     @staticmethod
-    def forward(ctx, center_xyz, xyz, radius, num_sample):
+    def forward(ctx, xyz, center_xyz, radius, num_sample):
         # type: (Any, float, int, torch.Tensor, torch.Tensor) -> torch.Tensor
         r"""
         Parameters
@@ -33,7 +33,7 @@ class BallQuery(Function):
         torch.Tensor
             (B, npoint, nsample) tensor with the indicies of the features that form the query balls
         """
-        output = ball_query_ext.ball_query_forward(center_xyz, xyz, radius, num_sample)
+        output = ball_query_ext.ball_query_forward(xyz, center_xyz, radius, num_sample)
 
         ctx.mark_non_differentiable(output)
 

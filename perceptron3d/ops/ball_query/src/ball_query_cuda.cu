@@ -10,8 +10,8 @@
 // input: new_xyz(b, m, 3) xyz(b, n, 3)
 // output: idx(b, m, nsample)
 template <typename scalar_t>
-__global__ void ball_query_cuda_forward_kernel(ACCESSOR(scalar_t, 3) center_xyz,
-                                               ACCESSOR(scalar_t, 3) xyz,
+__global__ void ball_query_cuda_forward_kernel(ACCESSOR(scalar_t, 3) xyz,
+                                               ACCESSOR(scalar_t, 3) center_xyz,
                                                ACCESSOR(int64_t, 3) idx,
                                                float radius, int nsample)
 {
@@ -50,14 +50,14 @@ __global__ void ball_query_cuda_forward_kernel(ACCESSOR(scalar_t, 3) center_xyz,
     }
 }
 
-torch::Tensor ball_query_cuda_forward(torch::Tensor center_xyz, torch::Tensor xyz, torch::Tensor idx, float radius, int nsample)
+torch::Tensor ball_query_cuda_forward(torch::Tensor xyz, torch::Tensor center_xyz, torch::Tensor idx, float radius, int nsample)
 {
     dim3 blocks((center_xyz.size(1) - 1) / THREADS_PER_BLOCK + 1, center_xyz.size(0));
     dim3 threads(THREADS_PER_BLOCK);
     AT_DISPATCH_FLOATING_TYPES(xyz.scalar_type(), "ball_query_cuda_forward_kernel", ([&]
                                                                                      { ball_query_cuda_forward_kernel<scalar_t><<<blocks, threads>>>(
-                                                                                           center_xyz.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>(),
                                                                                            xyz.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>(),
+                                                                                           center_xyz.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>(),
                                                                                            idx.packed_accessor32<int64_t, 3, torch::RestrictPtrTraits>(),
                                                                                            radius, nsample); }));
     return idx;
