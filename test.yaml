@@ -3,6 +3,7 @@ pointnet:
   size: 4
 
 c:
+  0.4: a
   pn: 
     $.pointnet: 
       b: 2

@@ -32,14 +32,14 @@ yaml.SafeLoader.add_constructor('!ENV', constructor)
 # Required for safe_dump
 # yaml.SafeDumper.add_multi_representer(EnvTag, EnvTag.to_yaml)
 
-from perceptron3d.ops.ball_query import ball_query
-from perceptron3d.ops.interpolate import three_interpolate
-from perceptron3d.ops.furthest_point_sample import furthest_point_sample
+from perception3d.ops.ball_query import ball_query
+from perception3d.ops.interpolate import three_interpolate
+from perception3d.ops.furthest_point_sample import furthest_point_sample
 # from setuptools import sandbox
 if __name__ == '__main__':
-    print(ball_query(torch.zeros((3, 5, 3), device='cuda'), torch.zeros((3, 3, 3), device='cuda'), 0.1, 256).shape)
-    # conf = OmegaConf.load('test.yaml')
-    # print(conf)
+    # print(ball_query(torch.zeros((3, 5, 3), device='cuda'), torch.zeros((3, 3, 3), device='cuda'), 0.1, 256).shape)
+    conf = OmegaConf.load('test.yaml')
+    print(conf)
     # sandbox.run_setup('./setup.py', ['build_ext', '--inplace'])
     # yml = yaml.safe_load(open('test.yaml'))
     # # print(yml)
