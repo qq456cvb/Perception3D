@@ -12,21 +12,25 @@ default_cfg:
     <<: ${.dataloader_cfg}
 
 train:
+  <<: ${.default_cfg}
   dataloader: !torch.utils.data.DataLoader
     dataset: !perception3d.datasets.shapenet.ShapeNetPartDataset
+      root: 'shapenettrain'
       split: 'train'
     shuffle: True
     drop_last: True
-  <<: ${.default_cfg}
+  
 val:
+  <<: ${.default_cfg}
   dataloader: !
     dataset: !
       split: 'val'
     shuffle: False
-  <<: ${.default_cfg}
+  
 test:
+  <<: ${.default_cfg}
   dataloader: !
     dataset: !
       split: 'test'
     shuffle: False
-  <<: ${.default_cfg}
+  

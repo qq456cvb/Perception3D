@@ -6,7 +6,8 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 from ruamel.yaml import YAML
 from ruamel.yaml.nodes import (SequenceNode, MappingNode, ScalarNode)
-from ruamel.yaml.constructor import SafeConstructor, DuplicateKeyError, DuplicateKeyFutureWarning, ConstructorError
+from ruamel.yaml.compat import Hashable
+from ruamel.yaml.constructor import SafeConstructor, DuplicateKeyError, DuplicateKeyFutureWarning, ConstructorError, BaseConstructor
 import os
 import pathlib
 import regex as re
@@ -16,6 +17,47 @@ import yaml
 import functools
 import importlib
 
+
+# Recursive dictionary merge
+# Copyright (C) 2016 Paul Durivage <pauldurivage+github@gmail.com>
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+import collections
+
+def dict_merge(dct, merge_dct):
+    """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
+    updating only top-level keys, dict_merge recurses down into dicts nested
+    to an arbitrary depth, updating keys. The ``merge_dct`` is merged into
+    ``dct``.
+    :param dct: dict onto which the merge is executed
+    :param merge_dct: dct merged into dct
+    :return: None
+    """
+    for k, v in merge_dct.items():
+        if (k in dct and isinstance(dct[k], dict)
+                and isinstance(merge_dct[k], collections.abc.Mapping)):
+            dict_merge(dct[k], merge_dct[k])
+        else:
+            dct[k] = merge_dct[k]
+    for k, v in dct.items():
+        if (k in merge_dct and isinstance(merge_dct[k], dict)
+                and isinstance(dct[k], collections.abc.Mapping)):
+            dict_merge(dct[k], merge_dct[k])
+        else:
+            merge_dct[k] = dct[k]
+            
+            
 class ConfigConstructor(SafeConstructor):
     def tag_constructor(tag, self, node):
         if isinstance(node, SequenceNode):
@@ -42,13 +84,10 @@ class ConfigConstructor(SafeConstructor):
         """
         merge = []  # type: List[Any]
         index = 0
-        
         while index < len(node.value):
             key_node, value_node = node.value[index]
             if key_node.tag == u'tag:yaml.org,2002:merge':
-                print(node)
                 if merge:  # double << key
-                    print(self.allow_duplicate_keys)
                     if self.allow_duplicate_keys:
                         del node.value[index]
                         index += 1
@@ -106,48 +145,52 @@ class ConfigConstructor(SafeConstructor):
         if bool(merge):
             node.merge = merge  # separate merge keys to be able to update without duplicate
             node.value = merge + node.value
-            
-    def construct_non_recursive_object(self, node, tag=None):
-        # type: (Any, Optional[str]) -> Any
-        constructor = None  # type: Any
-        tag_suffix = None
-        if tag is None:
-            tag = node.tag
-        
-        if tag in self.yaml_constructors:
-            constructor = self.yaml_constructors[tag]
-        else:
-            for tag_prefix in self.yaml_multi_constructors:
-                if tag.startswith(tag_prefix):
-                    tag_suffix = tag[len(tag_prefix) :]
-                    constructor = self.yaml_multi_constructors[tag_prefix]
-                    break
-            else:
-                if None in self.yaml_multi_constructors:
-                    tag_suffix = tag
-                    constructor = self.yaml_multi_constructors[None]
-                elif None in self.yaml_constructors:
-                    constructor = self.yaml_constructors[None]
-                elif isinstance(node, ScalarNode):
-                    constructor = self.__class__.construct_scalar
-                elif isinstance(node, SequenceNode):
-                    constructor = self.__class__.construct_sequence
-                elif isinstance(node, MappingNode):
-                    constructor = self.__class__.construct_mapping
-        if tag_suffix is None:
-            data = constructor(self, node)
-        else:
-            data = constructor(self, tag_suffix, node)
-        if isinstance(data, types.GeneratorType):
-            generator = data
-            data = next(generator)
-            if self.deep_construct:
-                for _dummy in generator:
-                    pass
-            else:
-                self.state_generators.append(generator)
-        return data
     
+    def construct_mapping(self, node, deep=False):
+        if isinstance(node, MappingNode):
+            self.flatten_mapping(node)
+        # type: (Any, bool) -> Any
+        """deep is True when creating an object/mapping recursively,
+        in that case want the underlying elements available during construction
+        """
+        if not isinstance(node, MappingNode):
+            raise ConstructorError(
+                None, None, 'expected a mapping node, but found %s' % node.id, node.start_mark
+            )
+        total_mapping = self.yaml_base_dict_type()
+        if getattr(node, 'merge', None) is not None:
+            todo = [(node.merge, False), (node.value, False)]
+        else:
+            todo = [(node.value, True)]
+        for values, check in todo:
+            mapping = self.yaml_base_dict_type()  # type: Dict[Any, Any]
+            for key_node, value_node in values:
+                # keys can be list -> deep
+                key = self.construct_object(key_node, deep=True)
+                # lists are not hashable, but tuples are
+                if not isinstance(key, Hashable):
+                    if isinstance(key, list):
+                        key = tuple(key)
+                if not isinstance(key, Hashable):
+                    raise ConstructorError(
+                        'while constructing a mapping',
+                        node.start_mark,
+                        'found unhashable key',
+                        key_node.start_mark,
+                    )
+
+                value = self.construct_object(value_node, deep=True)
+                if check:
+                    if self.check_mapping_key(node, key_node, mapping, key, value):
+                        mapping[key] = value
+                else:
+                    if key in mapping:
+                        dict_merge(mapping[key], value)
+                    else:
+                        # print(value)
+                        mapping[key] = value
+            total_mapping.update(mapping)
+        return total_mapping
     
 class ConfigParser(object):
     def __init__(self) -> None:
@@ -225,7 +268,6 @@ class ConfigParser(object):
         self.tree = {}
         self.parse_recursive(file)
         res = self._write_tree()
-        # print(res)
         
         def traverse(tree, depth):
             if isinstance(tree, DictConfig):
@@ -239,7 +281,6 @@ class ConfigParser(object):
         yml.Constructor = ConfigConstructor
         # load with custom tags
         conf = yml.load(res)
-        
         # use omegaconf to resolve interpolations
         conf = OmegaConf.create(conf)
         traverse(conf, 0)
@@ -249,18 +290,17 @@ class ConfigParser(object):
         conf = re.sub(r'(?<!\s*#\s.*)<<<\s*:', '<<:', conf)
         # load again
         conf = yml.load(conf)
-        print(conf)
         
-        def init_pyinstance(tree, par, par_k):
-            if isinstance(tree, dict):
-                for k in tree:
-                    init_pyinstance(tree[k], tree, k)
-                if '__type__' in tree:
-                    params = dict([(k, v) for k, v in tree.items() if k != '__type__'])
-                    module_name, class_name = tree['__type__'].rsplit(".", 1)
-                    par[par_k] = getattr(importlib.import_module(module_name), class_name)(**params)
+        # def init_pyinstance(tree, par, par_k):
+        #     if isinstance(tree, dict):
+        #         for k in tree:
+        #             init_pyinstance(tree[k], tree, k)
+        #         if '__type__' in tree:
+        #             params = dict([(k, v) for k, v in tree.items() if k != '__type__'])
+        #             module_name, class_name = tree['__type__'].rsplit(".", 1)
+        #             par[par_k] = getattr(importlib.import_module(module_name), class_name)(**params)
         
-        init_pyinstance(conf, None, '')
+        # init_pyinstance(conf, None, '')
         return conf
 
 

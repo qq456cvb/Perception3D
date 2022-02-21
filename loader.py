@@ -158,18 +158,18 @@ from perception3d.ops.furthest_point_sample import furthest_point_sample
 # from setuptools import sandbox
 if __name__ == '__main__':
     # print(ball_query(torch.zeros((3, 5, 3), device='cuda'), torch.zeros((3, 3, 3), device='cuda'), 0.1, 256).shape)
-    conf = OmegaConf.load('test.yaml')
-    print(type(conf))
-    print(conf.c.pn.pn)
+    # conf = OmegaConf.load('test.yaml')
+    # print(type(conf))
+    # print(conf.c.pn.pn)
     # print(conf)
     # conf = yaml.safe_load(open('configs/default.yaml'))
     # print(conf)
     
-    # yml = YAML(typ='safe')
-    # CustomConstructor.add_pytags(['!torch.utils.data.DataLoader', '!perception3d.datasets.shapenet.ShapeNetPartDataset'])
-    # yml.Constructor = CustomConstructor
-    # conf = yml.load(open('configs/default.yaml'))
-    # print(conf)
+    yml = YAML(typ='safe')
+    CustomConstructor.add_pytags(['!torch.utils.data.DataLoader', '!perception3d.datasets.shapenet.ShapeNetPartDataset'])
+    yml.Constructor = CustomConstructor
+    conf = yml.load(open('tmp.yaml'))
+    print(conf)
     
     # sandbox.run_setup('./setup.py', ['build_ext', '--inplace'])
     # yml = yaml.safe_load(open('test.yaml'))
