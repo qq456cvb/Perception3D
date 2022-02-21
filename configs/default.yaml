@@ -1,4 +1,32 @@
+dataloader_cfg:
+  dataset: 
+    <<: ${..datasets.shapenet}
+  batch_size: 16
+  num_workers: 10
+
+default_cfg:
+  gpus: 0
+  accelerator: 'gpu'
+  strategy: 'ddp'
+  dataloader: !torch.utils.data.DataLoader
+    <<: ${.dataloader_cfg}
 
 train:
+  dataloader: !torch.utils.data.DataLoader
+    dataset: !perception3d.datasets.shapenet.ShapeNetPartDataset
+      split: 'train'
+    shuffle: True
+    drop_last: True
+  <<: ${.default_cfg}
 val:
+  dataloader: !
+    dataset: !
+      split: 'val'
+    shuffle: False
+  <<: ${.default_cfg}
 test:
+  dataloader: !
+    dataset: !
+      split: 'test'
+    shuffle: False
+  <<: ${.default_cfg}

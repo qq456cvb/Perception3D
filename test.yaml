@@ -1,12 +1,84 @@
-pointnet:
-  b: 3
-  size: 4
+default:
+  dataloader_cfg:
+    dataset: !perception3d.datasets.shapenet.ShapeNetPartDataset
+      g: 1
+    batch_size: 16
+    num_workers: 10
+  
+  default_cfg:
+    gpus: 0
+    accelerator: 'gpu'
+    strategy: 'ddp'
+    dataloader: !torch.utils.data.DataLoader
+      bb: ${default.dataloader_cfg}
+      k: ${datasets.shapenet.ShapeNetPartDataset}
+      g: ${augmentations.point_cloud.pc}
+  # train:
+  #   gg: ${.default_cfg}
+  #   dataloader: !
+  #     dataset: !
+  #       split: 'train'
+  #     shuffle: True
+  #     drop_last: True
+  # val:
+  #   <<: ${.default_cfg}
+  #   dataloader: !
+  #     dataset: !
+  #       split: 'val'
+  #     shuffle: False
+  # test:
+  #   <<: ${.default_cfg}
+  #   dataloader: !
+  #     dataset: !
+  #       split: 'test'
+  #     shuffle: False
 
-c:
-  0.4: a
-  pn: 
-    $.pointnet: 
-      b: 2
-  modules:
-    - a
-  d: 4
+datasets:
+  shapenet:
+    
+    ShapeNetPartDataset:
+      root: 'shapenet'
+      preload: True
+
+augmentations:
+  point_cloud:
+    pc:
+      a: 1
+      b: hh
+
+models:
+  default:
+    dataloader_cfg:
+      dataset: !perception3d.datasets.shapenet.ShapeNetPartDataset
+        g: 1
+      batch_size: 16
+      num_workers: 10
+    
+    default_cfg:
+      gpus: 0
+      accelerator: 'gpu'
+      strategy: 'ddp'
+      dataloader: !torch.utils.data.DataLoader
+        <<: ${default.dataloader_cfg}
+        k: ${datasets.shapenet.ShapeNetPartDataset}
+        g: ${augmentations.point_cloud.pc}
+    # train:
+    #   gg: ${.default_cfg}
+    #   dataloader: !
+    #     dataset: !
+    #       split: 'train'
+    #     shuffle: True
+    #     drop_last: True
+    # val:
+    #   <<: ${.default_cfg}
+    #   dataloader: !
+    #     dataset: !
+    #       split: 'val'
+    #     shuffle: False
+    # test:
+    #   <<: ${.default_cfg}
+    #   dataloader: !
+    #     dataset: !
+    #       split: 'test'
+    #     shuffle: False
+

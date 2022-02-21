@@ -7,7 +7,7 @@ class Identity(object):
     def __init__(self) -> None:
         pass
     
-    def __call__(self, *, **kwargs):
+    def __call__(self, **kwargs):
         return kwargs
 
 
@@ -15,7 +15,7 @@ class Compose(object):
     def __init__(self, augmentations) -> None:
         self.augmentations = augmentations
     
-    def call_impl(self, aug, *, **kwargs):
+    def call_impl(self, aug, **kwargs):
         res = kwargs
         if isinstance(aug, list):
             for a in aug:
@@ -28,5 +28,5 @@ class Compose(object):
         else:
             return self.call_impl(aug, **res)
         
-    def __call__(self, *, **kwargs):
+    def __call__(self, **kwargs):
         return self.call_impl(self.augmentations, **kwargs)
