@@ -275,7 +275,7 @@ class ConfigParser(object):
                     traverse(tree[k], depth + 1)
                     tree[k] = tree[k]
         # replace << with <<<
-        res = re.sub(r'(?<!\s*#\s.*)<<\s*:', '<<<:', res)
+        res = re.sub(r'(?<!\s*#\s.*)<<\s*:', '__<<<__:', res)
         yml = YAML(typ='safe')
         ConfigConstructor.add_pytags(['!torch.utils.data.DataLoader', '!perception3d.datasets.shapenet.ShapeNetPartDataset'])
         yml.Constructor = ConfigConstructor
@@ -287,7 +287,7 @@ class ConfigParser(object):
         conf = OmegaConf.to_yaml(conf)
         
         # convert merge tag back
-        conf = re.sub(r'(?<!\s*#\s.*)<<<\s*:', '<<:', conf)
+        conf = re.sub(r'(?<!\s*#\s.*)__<<<__\s*:', '<<:', conf)
         # load again
         conf = yml.load(conf)
         
