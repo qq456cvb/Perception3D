@@ -1,4 +1,5 @@
 import os
+import tempfile
 from distutils.core import run_setup
 import re
 from glob import glob
@@ -20,12 +21,13 @@ def build_ext(name, working_dir):
     src += "cmdclass={\n"
     src += "'build_ext': BuildExtension\n"
     src += "})\n"
-    with open(os.path.join(working_dir, 'setup.py'), 'w') as f:
+    _, setup_tmpfile = tempfile.mkstemp(suffix='.py')
+    with open(setup_tmpfile, 'w') as f:
         f.write(src)
     
     if working_dir is not None:
         wd = os.getcwd()
         os.chdir(working_dir)
-    run_setup(os.path.join(working_dir, 'setup.py'), script_args=['build_ext', '--inplace'], stop_after='run')
+    run_setup(setup_tmpfile, script_args=['build_ext', '--inplace'], stop_after='run')
     if working_dir is not None:
         os.chdir(wd)
