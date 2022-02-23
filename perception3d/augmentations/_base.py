@@ -25,6 +25,8 @@ class Compose(object):
             probs, augs = list(zip(*aug.items()))
             aug_chosen = augs[np.random.choice(len(augs), p=probs / np.sum(probs))]
             return self.call_impl(aug_chosen, **res)
+        elif aug is None:
+            return res
         else:
             return self.call_impl(aug, **res)
         

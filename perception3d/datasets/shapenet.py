@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from perception3d.datasets.base import BaseDataset, MemoryCachedDataset, download
+from perception3d.datasets._base import BaseDataset, MemoryCachedDataset, download
 from glob import glob
 
 id2name = {
@@ -90,10 +90,10 @@ class ShapeNetPartDataset(MemoryCachedDataset):
         fn = self.records[idx]
         pts = np.loadtxt(fn)
         labels = np.loadtxt(rreplace(rreplace(fn, 'pts', 'seg'), '_data', '_label'))
-        return {'pts': pts, 'labels': labels}
+        return {'points': pts, 'label': labels}
 
 
 if __name__ == '__main__':
     ds = ShapeNetPartDataset(root='shapenet', split='test')
     for d in ds:
-        print(d['pts'].shape, d['labels'].shape)
+        print(d['points'].shape, d['label'].shape)

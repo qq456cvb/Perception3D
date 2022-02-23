@@ -1,5 +1,5 @@
 dataloader_cfg:
-  dataset: 
+  dataset: !perception3d.datasets.shapenet.ShapeNetPartDataset
     <<: ${..datasets.shapenet}
   batch_size: 16
   num_workers: 10
@@ -13,8 +13,8 @@ default_cfg:
 
 train:
   <<: ${.default_cfg}
-  dataloader: !torch.utils.data.DataLoader
-    dataset: !perception3d.datasets.shapenet.ShapeNetPartDataset
+  dataloader: !
+    dataset: !
       root: 'shapenettrain'
       split: 'train'
     shuffle: True

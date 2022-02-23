@@ -1,5 +1,5 @@
 from urllib.parse import urlparse
-from perception3d.augmentations.base import Compose, Identity
+from perception3d.augmentations._base import Compose, Identity
 import os
 import torch
 import sys

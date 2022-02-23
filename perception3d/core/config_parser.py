@@ -57,7 +57,17 @@ def dict_merge(dct, merge_dct):
         else:
             merge_dct[k] = dct[k]
             
-            
+
+def init_pyinstance(tree, par, par_k):
+    if isinstance(tree, dict):
+        for k in tree:
+            init_pyinstance(tree[k], tree, k)
+        if '__type__' in tree:
+            params = dict([(k, v) for k, v in tree.items() if k != '__type__'])
+            module_name, class_name = tree['__type__'].rsplit(".", 1)
+            par[par_k] = getattr(importlib.import_module(module_name), class_name)(**params)
+        
+        
 class ConfigConstructor(SafeConstructor):
     def tag_constructor(tag, self, node):
         if isinstance(node, SequenceNode):
@@ -291,15 +301,6 @@ class ConfigParser(object):
         # load again
         conf = yml.load(conf)
         
-        # def init_pyinstance(tree, par, par_k):
-        #     if isinstance(tree, dict):
-        #         for k in tree:
-        #             init_pyinstance(tree[k], tree, k)
-        #         if '__type__' in tree:
-        #             params = dict([(k, v) for k, v in tree.items() if k != '__type__'])
-        #             module_name, class_name = tree['__type__'].rsplit(".", 1)
-        #             par[par_k] = getattr(importlib.import_module(module_name), class_name)(**params)
-        
         # init_pyinstance(conf, None, '')
         return conf
 
@@ -308,17 +309,3 @@ if __name__ == '__main__':
     parser = ConfigParser()
     res = parser.parse('configs/default.yaml')
     print(res)
-    # replace << with <<<
-    # res = re.sub(r'(?<!\s*#\s.*)<<\s*:', '<<<:', res)
-    # yml = YAML(typ='safe')
-    # ConfigConstructor.add_pytags(['!torch.utils.data.DataLoader', '!perception3d.datasets.shapenet.ShapeNetPartDataset'])
-    # yml.Constructor = ConfigConstructor
-    # conf = yml.load(res)
-    # open('test.yaml', 'w').write(res)
-    # conf = OmegaConf.create(conf)
-    # traverse(conf, 0)
-    # conf = OmegaConf.to_yaml(conf)
-    # conf = re.sub(r'(?<!\s*#\s.*)<<<\s*:', '<<:', conf)
-    # conf = yml.load(conf)
-    # print(conf)
-    # print(OmegaConf.load('test.yaml'))
