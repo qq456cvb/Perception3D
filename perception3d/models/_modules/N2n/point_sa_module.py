@@ -14,25 +14,12 @@ class BasePointSAModule(nn.Module):
         sample_nums (list[int]): Number of samples in each ball query.
         mlp_channels (list[list[int]]): Specify of the pointnet before
             the global pooling for each scale.
-        fps_mod (list[str]: Type of FPS method, valid mod
-            ['F-FPS', 'D-FPS', 'FS'], Default: ['D-FPS'].
-            F-FPS: using feature distances for FPS.
-            D-FPS: using Euclidean distances of points for FPS.
-            FS: using F-FPS and D-FPS simultaneously.
-        fps_sample_range_list (list[int]): Range of points to apply FPS.
-            Default: [-1].
-        dilated_group (bool): Whether to use dilated ball query.
-            Default: False.
         use_xyz (bool): Whether to use xyz.
             Default: True.
         pool_mod (str): Type of pooling method.
             Default: 'max_pool'.
         normalize_xyz (bool): Whether to normalize local XYZ with radius.
             Default: False.
-        grouper_return_grouped_xyz (bool): Whether to return grouped xyz in
-            `QueryAndGroup`. Defaults to False.
-        grouper_return_grouped_idx (bool): Whether to return grouped idx in
-            `QueryAndGroup`. Defaults to False.
     """
 
     def __init__(self,
@@ -53,15 +40,15 @@ class BasePointSAModule(nn.Module):
         self.mlp_channels = mlp_channels
 
         self.num_point = num_point
-        
+        self.radii = radii
         self.pooling = pooling
         self.groupers = nn.ModuleList()
         self.mlps = nn.ModuleList()
 
         for i in range(len(radii)):
-            radius = radii[i]
-            sample_num = sample_nums[i]
             if num_point is not None:
+                radius = radii[i]
+                sample_num = sample_nums[i]
                 grouper = QueryAndGroup(
                     radius,
                     sample_num,

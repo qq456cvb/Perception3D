@@ -10,6 +10,9 @@ default_cfg:
   strategy: 'ddp'
   dataloader: !torch.utils.data.DataLoader
     <<: ${.dataloader_cfg}
+  metric_fn: !perception3d.metrics.classification.accuracy.AccuracyMetric
+  log_dir: 'shapenet_log'
+
 
 train:
   <<: ${.default_cfg}
@@ -19,18 +22,18 @@ train:
       split: 'train'
     shuffle: True
     drop_last: True
-  
+    loss_fn: !perception3d.losses.classification.cross_entropy.CrossEntropyLoss
+    
 val:
   <<: ${.default_cfg}
   dataloader: !
     dataset: !
       split: 'val'
     shuffle: False
-  
+  loss_fn: !perception3d.losses.classification.cross_entropy.CrossEntropyLoss
 test:
   <<: ${.default_cfg}
   dataloader: !
     dataset: !
       split: 'test'
     shuffle: False
-  

@@ -17,10 +17,8 @@ class PointFPModule(nn.Module):
 
     def __init__(self,
                  mlp_channels: List[int],
-                 bn=True,
-                 init_cfg=None):
-        super().__init__(init_cfg=init_cfg)
-        self.fp16_enabled = False
+                 bn=True):
+        super().__init__()
         self.mlps = nn.Sequential()
         for i in range(len(mlp_channels) - 1):
             self.mlps.add_module(

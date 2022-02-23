@@ -72,11 +72,15 @@ class ConfigConstructor(SafeConstructor):
     def tag_constructor(tag, self, node):
         if isinstance(node, SequenceNode):
             constructor = self.__class__.construct_sequence
+            data = constructor(self, node)
             node.tag = 'tag:yaml.org,2002:seq'
         elif isinstance(node, MappingNode):
             constructor = self.__class__.construct_mapping
+            data = constructor(self, node)
             node.tag = 'tag:yaml.org,2002:map'
-        data = constructor(self, node)
+        elif isinstance(node, ScalarNode):
+            assert node.value == ''
+            data = self.yaml_base_dict_type()
         data['__type__'] = tag[1:]
         return data
     
@@ -235,7 +239,7 @@ class ConfigParser(object):
         if isinstance(file, (str, pathlib.Path)):
             file_path = os.path.abspath(file)
             file_path_noext = os.path.splitext(file_path)[0]
-            base_path = str(pathlib.Path(os.path.join(os.path.dirname(os.path.abspath(perception3d.__file__)), '../configs')).resolve())
+            base_path = self.base_path
             todos = []
             
             f = io.open(os.path.abspath(file), "r", encoding="utf-8")
@@ -276,6 +280,8 @@ class ConfigParser(object):
         
     def parse(self, file):
         self.tree = {}
+        self.base_path = str(pathlib.Path(os.path.join(os.path.dirname(os.path.abspath(perception3d.__file__)), '../configs')).resolve())
+        mod = os.path.splitext(os.path.relpath(file, self.base_path))[0].replace('/', '.')
         self.parse_recursive(file)
         res = self._write_tree()
         
@@ -284,10 +290,12 @@ class ConfigParser(object):
                 for k in tree:
                     traverse(tree[k], depth + 1)
                     tree[k] = tree[k]
+        
+        pytags = re.findall(r'(?<!\s*#\s.*)\!.+', res)  
         # replace << with <<<
         res = re.sub(r'(?<!\s*#\s.*)<<\s*:', '__<<<__:', res)
         yml = YAML(typ='safe')
-        ConfigConstructor.add_pytags(['!torch.utils.data.DataLoader', '!perception3d.datasets.shapenet.ShapeNetPartDataset'])
+        ConfigConstructor.add_pytags(pytags)
         yml.Constructor = ConfigConstructor
         # load with custom tags
         conf = yml.load(res)
@@ -301,8 +309,7 @@ class ConfigParser(object):
         # load again
         conf = yml.load(conf)
         
-        # init_pyinstance(conf, None, '')
-        return conf
+        return conf[mod]
 
 
 if __name__ == '__main__':
