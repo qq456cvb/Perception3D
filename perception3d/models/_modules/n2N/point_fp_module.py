@@ -20,6 +20,7 @@ class PointFPModule(nn.Module):
                  bn=True):
         super().__init__()
         self.mlps = nn.Sequential()
+        self.mlp_channels = mlp_channels
         for i in range(len(mlp_channels) - 1):
             self.mlps.add_module(
                 f'layer{i}',
@@ -31,6 +32,7 @@ class PointFPModule(nn.Module):
                     bias=False if bn else True))
             if bn:
                 self.mlps.add_module(f'layer{i}_bn', nn.BatchNorm2d(mlp_channels[i + 1]))
+            self.mlps.add_module(f'layer{i}_relu', nn.ReLU())
 
     def forward(self, target: torch.Tensor, source: torch.Tensor,
                 target_feats: torch.Tensor,

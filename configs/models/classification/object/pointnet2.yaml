@@ -1,0 +1,76 @@
+default_cfg:
+  max_epochs: 100 
+  gpus: [0]
+  accelerator: 'gpu'
+  strategy: 'ddp'
+  log_dir: 'shapenet_log'
+  dataloader: !torch.utils.data.DataLoader
+    <<: ${.dataloader_cfg}
+  
+model: !perception3d.models.segmentation.object.pointnet2_part_seg_msg.PointNet2SegMSG
+  in_channels: 3
+  num_class: 16
+  num_seg_class: 50
+  sa_modules: 
+    - !perception3d.models._modules.N2n.point_sa_module.PointSAModuleMSG
+      num_point: 512
+      radii: [0.1, 0.2, 0.4]
+      sample_nums: [32, 64, 128]
+      mlp_channels: [[32, 32, 64], [64, 64, 128], [64, 96, 128]]
+      normalize_xyz: True
+    - !perception3d.models._modules.N2n.point_sa_module.PointSAModuleMSG
+      num_point: 128
+      radii: [0.4, 0.8]
+      sample_nums: [64, 128]
+      mlp_channels: [[128, 128, 256], [128, 196, 256]]
+      normalize_xyz: True
+    - !perception3d.models._modules.N2n.point_sa_module.PointSAModule
+      num_point: None
+      radii: None
+      sample_nums: None
+      mlp_channels: [256, 512, 1024]
+      normalize_xyz: True
+  fp_modules:
+    - !perception3d.models._modules.n2N.point_fp_module.PointFPModule
+      mlp_channels: [256, 256]
+    - !perception3d.models._modules.n2N.point_fp_module.PointFPModule
+      mlp_channels: [256, 128]
+    - !perception3d.models._modules.n2N.point_fp_module.PointFPModule
+      mlp_channels: [128, 128]
+  out_mlp_channels: [128]
+  out_dropouts: [0.5]
+
+
+dataloader_cfg:
+  batch_size: 16
+  num_workers: 10
+  dataset: !perception3d.datasets.shapenet.ShapeNetPartDataset
+    <<: ${datasets.shapenet}
+
+
+train:
+  <<: ${.default_cfg}
+  gradient_clip_val: 1.
+  gradient_clip_algorithm: 'norm'
+  dataloader: !
+    dataset: !
+      split: 'train'
+    shuffle: True
+    drop_last: True
+  loss_fn: !perception3d.losses.classification.cross_entropy.CrossEntropyLoss
+    
+val:
+  <<: ${.default_cfg}
+  dataloader: !
+    dataset: !
+      split: 'val'
+    shuffle: False
+  loss_fn: !perception3d.losses.classification.cross_entropy.CrossEntropyLoss
+
+test:
+  <<: ${.default_cfg}
+  dataloader: !
+    dataset: !
+      split: 'test'
+    shuffle: False
+

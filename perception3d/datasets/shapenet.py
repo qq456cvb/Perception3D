@@ -69,16 +69,19 @@ class ShapeNetPartDataset(MemoryCachedDataset):
         self.root = root
         self.split = split
         self.data_path = os.path.join(root, split)
-        if not os.path.exists(self.data_path) or not os.listdir(self.data_path):
+        if not os.path.exists(self.data_path) or not list(filter(lambda fn: fn[-4:] != '.zip', os.listdir(self.data_path))):
             print('Downloading ShapeNet data files...')
             os.makedirs(self.data_path, exist_ok=True)
             download(f'{self.dataset_url}/{split}_data.zip', self.data_path)
             download(f'{self.dataset_url}/{split}_label.zip', self.data_path)
             
         self.records = []
+        self.classes = []
         for name in self.valid_names:
             synset_id = name2id[name]
-            self.records.extend(list(glob(os.path.join(self.data_path, f'{split}_data', synset_id, '*.pts'))))
+            records = list(glob(os.path.join(self.data_path, f'{split}_data', synset_id, '*.pts')))
+            self.records.extend(records)
+            self.classes.extend([self.valid_names.index(name)] * len(records))
         super().__init__(**kwargs)
         
     def __len__(self):
@@ -90,10 +93,11 @@ class ShapeNetPartDataset(MemoryCachedDataset):
         fn = self.records[idx]
         pts = np.loadtxt(fn)
         labels = np.loadtxt(rreplace(rreplace(fn, 'pts', 'seg'), '_data', '_label'))
-        return {'points': pts, 'label': labels}
+        label_cls = self.classes[idx]
+        return {'points': pts, 'gt_label': labels, 'gt_label_cls': label_cls}
 
 
 if __name__ == '__main__':
     ds = ShapeNetPartDataset(root='shapenet', split='test')
     for d in ds:
-        print(d['points'].shape, d['label'].shape)
+        print(d['points'].shape, d['gt_label'].shape)

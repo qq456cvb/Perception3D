@@ -58,7 +58,7 @@ def dict_merge(dct, merge_dct):
             merge_dct[k] = dct[k]
             
 
-def init_pyinstance(tree, par, par_k):
+def init_pyinstance(tree, par=None, par_k=None):
     if isinstance(tree, dict):
         for k in tree:
             init_pyinstance(tree[k], tree, k)
@@ -66,6 +66,9 @@ def init_pyinstance(tree, par, par_k):
             params = dict([(k, v) for k, v in tree.items() if k != '__type__'])
             module_name, class_name = tree['__type__'].rsplit(".", 1)
             par[par_k] = getattr(importlib.import_module(module_name), class_name)(**params)
+    elif isinstance(tree, list):
+        for i in range(len(tree)):
+            init_pyinstance(tree[i], tree, i)
         
         
 class ConfigConstructor(SafeConstructor):
@@ -308,8 +311,9 @@ class ConfigParser(object):
         conf = re.sub(r'(?<!\s*#\s.*)__<<<__\s*:', '<<:', conf)
         # load again
         conf = yml.load(conf)
-        
-        return conf[mod]
+        for m in mod.split('.'):
+            conf = conf[m]
+        return conf
 
 
 if __name__ == '__main__':

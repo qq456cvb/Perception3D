@@ -10,4 +10,4 @@ class CrossEntropyLoss(BaseLoss):
         self.additional_args = kwargs
         
     def forward(self, *, preds, targets):
-        return {'loss_ce': F.cross_entropy(preds['label_logit'], targets['label'], **self.additional_args)}
+        return {'loss_ce': F.cross_entropy(preds['pred_label_logit'], targets['gt_label'], **self.additional_args)}

@@ -11,6 +11,6 @@ class AccuracyMetric(BaseMetric):
         self.dim = dim
         
     def __call__(self, *, preds, targets):
-        prob = F.softmax(preds['label_logit'], dim=self.dim)
-        return {'metric_acc': torch.sum(prob.argmax(self.dim) == targets['label']).cpu().numpy()}
+        prob = F.softmax(preds['pred_label_logit'], dim=self.dim)
+        return {'metric_acc': torch.sum(prob.argmax(self.dim) == targets['gt_label'])}
     

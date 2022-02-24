@@ -1,0 +1,8 @@
+
+optimizer: !torch.optim.Adam
+  parameter_scope: model
+  lr: 1e-3
+  weight_decay: 1e-4
+  
+lr_scheduler:
+  

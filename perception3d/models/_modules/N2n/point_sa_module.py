@@ -30,7 +30,7 @@ class BasePointSAModule(nn.Module):
                  use_xyz=True,
                  pooling='max',
                  normalize_xyz=False):
-        super(BasePointSAModule, self).__init__()
+        super().__init__()
 
         assert len(radii) == len(sample_nums) == len(mlp_channels)
         assert pooling in ['max', 'avg']
@@ -42,6 +42,9 @@ class BasePointSAModule(nn.Module):
         self.num_point = num_point
         self.radii = radii
         self.pooling = pooling
+        self.use_xyz = use_xyz
+        self.normalize_xyz = normalize_xyz
+        self.sample_nums = sample_nums
         self.groupers = nn.ModuleList()
         self.mlps = nn.ModuleList()
 
@@ -193,7 +196,7 @@ class PointSAModuleMSG(BasePointSAModule):
                  use_xyz=True,
                  pooling='max',
                  normalize_xyz=False):
-        super(PointSAModuleMSG, self).__init__(
+        super().__init__(
             num_point=num_point,
             radii=radii,
             sample_nums=sample_nums,
@@ -202,6 +205,7 @@ class PointSAModuleMSG(BasePointSAModule):
             pooling=pooling,
             normalize_xyz=normalize_xyz)
 
+        self.bn = bn
         for i in range(len(self.mlp_channels)):
             mlp_channel = self.mlp_channels[i]
             if use_xyz:
@@ -251,17 +255,17 @@ class PointSAModule(PointSAModuleMSG):
     def __init__(self,
                  mlp_channels,
                  num_point=None,
-                 radius=None,
-                 num_sample=None,
+                 radii=None,
+                 sample_nums=None,
                  bn=True,
                  use_xyz=True,
                  pooling='max',
                  normalize_xyz=False):
-        super(PointSAModule, self).__init__(
+        super().__init__(
             mlp_channels=[mlp_channels],
             num_point=num_point,
-            radii=[radius],
-            sample_nums=[num_sample],
+            radii=[radii],
+            sample_nums=[sample_nums],
             bn=bn,
             use_xyz=use_xyz,
             pooling=pooling,
