@@ -65,9 +65,10 @@ class ShapeNetPartDataset(MemoryCachedDataset):
                    'lamp', 'laptop', 'motorbike', 'mug', 'pistol', 'rocket', 'skateboard', 'table']
     dataset_url = 'https://shapenet.cs.stanford.edu/iccv17/partseg'
     
-    def __init__(self, *, root, split, **kwargs) -> None:
+    def __init__(self, *, root, split, num_sample, **kwargs) -> None:
         self.root = root
         self.split = split
+        self.num_sample = num_sample
         self.data_path = os.path.join(root, split)
         if not os.path.exists(self.data_path) or not list(filter(lambda fn: fn[-4:] != '.zip', os.listdir(self.data_path))):
             print('Downloading ShapeNet data files...')
@@ -93,11 +94,16 @@ class ShapeNetPartDataset(MemoryCachedDataset):
         fn = self.records[idx]
         pts = np.loadtxt(fn)
         labels = np.loadtxt(rreplace(rreplace(fn, 'pts', 'seg'), '_data', '_label'))
+        
+        sample_idx = np.random.randint(pts.shape[0], size=(self.num_sample,))
+        pts = pts[sample_idx]
+        labels = labels[sample_idx]
+        
         label_cls = self.classes[idx]
         return {'points': pts, 'gt_label': labels, 'gt_label_cls': label_cls}
 
 
 if __name__ == '__main__':
-    ds = ShapeNetPartDataset(root='shapenet', split='test')
+    ds = ShapeNetPartDataset(root='shapenet', split='test', num_sample=2048)
     for d in ds:
         print(d['points'].shape, d['gt_label'].shape)

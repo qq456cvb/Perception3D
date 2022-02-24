@@ -14,7 +14,7 @@ import regex as re
 import io
 import perception3d
 import yaml
-import functools
+from functools import lru_cache, partial
 import importlib
 
 
@@ -56,19 +56,20 @@ def dict_merge(dct, merge_dct):
             dict_merge(dct[k], merge_dct[k])
         else:
             merge_dct[k] = dct[k]
-            
 
-def init_pyinstance(tree, par=None, par_k=None):
+def init_pyinstance(par, par_k):
+    tree = par[par_k]
     if isinstance(tree, dict):
         for k in tree:
-            init_pyinstance(tree[k], tree, k)
+            init_pyinstance(tree, k)
         if '__type__' in tree:
             params = dict([(k, v) for k, v in tree.items() if k != '__type__'])
             module_name, class_name = tree['__type__'].rsplit(".", 1)
             par[par_k] = getattr(importlib.import_module(module_name), class_name)(**params)
     elif isinstance(tree, list):
         for i in range(len(tree)):
-            init_pyinstance(tree[i], tree, i)
+            init_pyinstance(tree, i)
+    return par[par_k]
         
         
 class ConfigConstructor(SafeConstructor):
@@ -90,7 +91,7 @@ class ConfigConstructor(SafeConstructor):
     @classmethod
     def add_pytags(self, tags):
         for tag in tags:
-            self.add_constructor(tag, functools.partial(ConfigConstructor.tag_constructor, tag))
+            self.add_constructor(tag, partial(ConfigConstructor.tag_constructor, tag))
         
     def flatten_mapping(self, node):
         # type: (Any) -> Any

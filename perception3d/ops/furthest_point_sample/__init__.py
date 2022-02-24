@@ -33,7 +33,7 @@ class FurthestPointSampling(Function):
         """
         assert points_xyz.is_contiguous()
 
-        output = furthest_point_sample_ext.furthest_point_sampling_forward(points_xyz)
+        output = furthest_point_sample_ext.furthest_point_sampling_forward(points_xyz, num_points)
         ctx.mark_non_differentiable(output)
         return output
 

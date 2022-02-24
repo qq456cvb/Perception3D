@@ -1,2 +1,3 @@
 root: 'shapenet'
-preload: True
+preload: False
+num_sample: 2048
