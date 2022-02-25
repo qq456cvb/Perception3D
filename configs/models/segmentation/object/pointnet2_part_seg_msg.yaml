@@ -1,0 +1,31 @@
+in_channels: 3
+num_class: 16
+num_seg_class: 50
+sa_modules: 
+  - !perception3d.models._modules.N2n.point_sa_module.PointSAModuleMSG
+    num_point: 512
+    radii: [0.1, 0.2, 0.4]
+    sample_nums: [32, 64, 128]
+    mlp_channels: [[32, 32, 64], [64, 64, 128], [64, 96, 128]]
+    normalize_xyz: True
+  - !perception3d.models._modules.N2n.point_sa_module.PointSAModuleMSG
+    num_point: 128
+    radii: [0.4, 0.8]
+    sample_nums: [64, 128]
+    mlp_channels: [[128, 128, 256], [128, 196, 256]]
+    normalize_xyz: True
+  - !perception3d.models._modules.N2n.point_sa_module.PointSAModule
+    num_point: null
+    radii: null
+    sample_nums: null
+    mlp_channels: [256, 512, 1024]
+    normalize_xyz: True
+fp_modules:
+  - !perception3d.models._modules.n2N.point_fp_module.PointFPModule
+    mlp_channels: [256, 256]
+  - !perception3d.models._modules.n2N.point_fp_module.PointFPModule
+    mlp_channels: [256, 128]
+  - !perception3d.models._modules.n2N.point_fp_module.PointFPModule
+    mlp_channels: [128, 128]
+out_mlp_channels: [128]
+out_dropouts: [0.5]

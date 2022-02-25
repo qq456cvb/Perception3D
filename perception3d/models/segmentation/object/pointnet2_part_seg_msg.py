@@ -5,6 +5,7 @@ from perception3d.models._modules.N2n.point_sa_module import PointSAModuleMSG
 from perception3d.models._modules.n2N.point_fp_module import PointFPModule
 import torch.nn as nn
 import torch
+import torch.nn.functional as F
 class PointNet2SegMSG(PointNet2ClsMSG):
     def __init__(self,
                  in_channels,
@@ -20,8 +21,8 @@ class PointNet2SegMSG(PointNet2ClsMSG):
         self.num_class = num_class
         self.num_seg_class = num_seg_class
         self.FP_modules = nn.ModuleList()
+        ch = self.feature_channels[len(fp_modules)]
         for i in range(len(fp_modules)):
-            ch = self.feature_channels[len(fp_modules) - i]
             last_ch = self.feature_channels[len(fp_modules) - i - 1]
             fp_modules[i].mlps = nn.Sequential(
                 nn.Conv2d(
@@ -32,6 +33,7 @@ class PointNet2SegMSG(PointNet2ClsMSG):
                     bias=False if bn else True),
                 fp_modules[i].mlps
             )
+            ch = fp_modules[i].mlp_channels[-1]
             self.FP_modules.append(fp_modules[i])
         self.num_fp = len(self.FP_modules)
         
@@ -69,7 +71,7 @@ class PointNet2SegMSG(PointNet2ClsMSG):
             if i != self.num_fp - 1:
                 sa_features[reverse_i - 1] = self.FP_modules[i](sa_xyzs[reverse_i - 1], sa_xyzs[reverse_i], sa_features[reverse_i - 1], sa_features[reverse_i])
             else:
-                features = torch.cat([label_cls, sa_xyzs[0]], dim=1)
+                features = torch.cat([F.one_hot(label_cls, self.num_class)[..., None].expand(-1, -1, sa_xyzs[0].shape[1]), sa_xyzs[0].transpose(1, 2)], dim=1)
                 if sa_features[0] is not None:
                     features = torch.cat([features, sa_features[0]], dim=1)
                 sa_features[0] = self.FP_modules[i](sa_xyzs[0], sa_xyzs[1], features, sa_features[1])

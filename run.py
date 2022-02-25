@@ -48,18 +48,29 @@ if __name__ == '__main__':
                     
                     loss_fn = self.cfg['train']['loss_fn']
                     loss = loss_fn(preds, batch)
+                    total_loss = sum(loss.values())
                     for k in loss:
                         self.log(k, loss[k].item(), prog_bar=True, on_step=True)
-                    print(loss)
-                    return dict(loss=loss, preds=preds, targets=batch)
+                    
+                    for k, pred in preds.items():
+                        if isinstance(pred, torch.Tensor):
+                            preds[k] = pred.detach()
+                    return dict(loss=total_loss, preds=preds, targets=batch)
             
             if 'metric_fn' in config_args_all['train']:
                 init_pyinstance(config_args_all['train'], 'metric_fn')
                 def training_epoch_end(self, outputs):
                     metric = self.cfg['train']['metric_fn'](preds=outputs['preds'], targets=outputs['targets'])
                     for k in metric:
-                        self.log(k, metric[k], on_epoch=True)
+                        self.log(k, metric[k])
         
+        def get_progress_bar_dict(self):
+            tqdm_dict = super().get_progress_bar_dict()
+            tqdm_dict.pop("v_num", None)
+            tqdm_dict['loss:all'] = tqdm_dict['loss']
+            del tqdm_dict['loss']
+            return tqdm_dict
+
         def configure_optimizers(self):
             opt_cfg = self.cfg['optimizer']
             if not isinstance(opt_cfg, list):

@@ -79,12 +79,13 @@ class BasePointSAModule(nn.Module):
         """
         if indices is not None:
             assert (indices.shape[1] == self.num_point[0])
-            new_xyz = torch.gather(points_xyz, dim=1,index=indices[..., None].tile((3,))).contiguous() if self.num_point is not None else None
+            new_xyz = torch.gather(points_xyz, dim=1, index=indices[..., None].tile((3,))).contiguous() if self.num_point is not None else None
         elif target_xyz is not None:
             new_xyz = target_xyz.contiguous()
         else:
             indices = furthest_point_sample(points_xyz, self.num_point)
-            new_xyz = torch.gather(points_xyz, dim=1,index=indices[..., None].tile((3,))).contiguous() if self.num_point is not None else None
+            # indices = torch.zeros((points_xyz.shape[0], self.num_point)).to(points_xyz).long()
+            new_xyz = torch.gather(points_xyz, dim=1, index=indices[..., None].tile((3,))).contiguous() if self.num_point is not None else None
 
         return new_xyz, indices
 
@@ -136,7 +137,10 @@ class BasePointSAModule(nn.Module):
         new_features_list = []
 
         # sample points, (B, num_point, 3), (B, num_point)
-        new_xyz, indices = self._sample_points(points_xyz, features, indices,
+        if self.num_point is None:
+            new_xyz, indices = points_xyz, None
+        else:
+            new_xyz, indices = self._sample_points(points_xyz, features, indices,
                                                target_xyz)
 
         for i in range(len(self.groupers)):

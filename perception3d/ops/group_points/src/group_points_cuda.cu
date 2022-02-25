@@ -34,6 +34,7 @@ void group_points_cuda_forward(torch::Tensor points, torch::Tensor idx, torch::T
                                                                                                 points.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>(),
                                                                                                 idx.packed_accessor32<int64_t, 3, torch::RestrictPtrTraits>(),
                                                                                                 out.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>()); }));
+    CHECK_ERROR();
 }
 
 // input: grad_out(b, c, npoints, nsample), idx(b, npoints, nsample)
@@ -63,4 +64,5 @@ void group_points_cuda_backward(torch::Tensor grad_points, torch::Tensor idx, to
                                                                                                       grad_points.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>(),
                                                                                                       idx.packed_accessor32<int64_t, 3, torch::RestrictPtrTraits>(),
                                                                                                       grad_out.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>()); }));
+    CHECK_ERROR();
 }

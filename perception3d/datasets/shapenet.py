@@ -100,7 +100,7 @@ class ShapeNetPartDataset(MemoryCachedDataset):
         labels = labels[sample_idx]
         
         label_cls = self.classes[idx]
-        return {'points': pts, 'gt_label': labels, 'gt_label_cls': label_cls}
+        return {'points': pts.astype(np.float32), 'gt_label': labels.astype(np.int64), 'gt_label_cls': label_cls}
 
 
 if __name__ == '__main__':

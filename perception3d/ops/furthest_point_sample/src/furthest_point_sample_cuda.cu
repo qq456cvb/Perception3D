@@ -7,23 +7,23 @@
 #include "../../_common/macro.h"
 
 #define TOTAL_THREADS 1024
-#define KERNEL_CASE(n, kernel, scalar_t, blocks, threads, ...)\
-    case n: {\
-        kernel<n, scalar_t><<<blocks, threads>>>(__VA_ARGS__);\
+#define KERNEL_CASE(n_threads, kernel, scalar_t, blocks, ...)\
+    case n_threads: {\
+        kernel<n_threads, scalar_t><<<blocks, n_threads>>>(__VA_ARGS__);\
     }
-#define DISPATCH_KERNEL(n_threads, kernel, scalar_t, blocks, threads, ...)\
+#define DISPATCH_KERNEL(n_threads, kernel, scalar_t, blocks, ...)\
     switch (n_threads) {\
-        KERNEL_CASE(1024, kernel, scalar_t, blocks, threads, __VA_ARGS__)\
-        KERNEL_CASE(512, kernel, scalar_t, blocks, threads, __VA_ARGS__)\
-        KERNEL_CASE(256, kernel, scalar_t, blocks, threads, __VA_ARGS__)\
-        KERNEL_CASE(128, kernel,scalar_t, blocks, threads, __VA_ARGS__)\
-        KERNEL_CASE(64, kernel, scalar_t, blocks, threads, __VA_ARGS__)\
-        KERNEL_CASE(32, kernel, scalar_t, blocks, threads, __VA_ARGS__)\
-        KERNEL_CASE(16, kernel, scalar_t, blocks, threads, __VA_ARGS__)\
-        KERNEL_CASE(8, kernel, scalar_t, blocks, threads, __VA_ARGS__)\
-        KERNEL_CASE(4, kernel, scalar_t, blocks, threads, __VA_ARGS__)\
-        KERNEL_CASE(2, kernel, scalar_t, blocks, threads, __VA_ARGS__)\
-        KERNEL_CASE(1, kernel, scalar_t, blocks, threads, __VA_ARGS__)\
+        KERNEL_CASE(1024, kernel, scalar_t, blocks, __VA_ARGS__)\
+        KERNEL_CASE(512, kernel, scalar_t, blocks, __VA_ARGS__)\
+        KERNEL_CASE(256, kernel, scalar_t, blocks, __VA_ARGS__)\
+        KERNEL_CASE(128, kernel,scalar_t, blocks, __VA_ARGS__)\
+        KERNEL_CASE(64, kernel, scalar_t, blocks, __VA_ARGS__)\
+        KERNEL_CASE(32, kernel, scalar_t, blocks, __VA_ARGS__)\
+        KERNEL_CASE(16, kernel, scalar_t, blocks, __VA_ARGS__)\
+        KERNEL_CASE(8, kernel, scalar_t, blocks, __VA_ARGS__)\
+        KERNEL_CASE(4, kernel, scalar_t, blocks, __VA_ARGS__)\
+        KERNEL_CASE(2, kernel, scalar_t, blocks, __VA_ARGS__)\
+        KERNEL_CASE(1, kernel, scalar_t, blocks, __VA_ARGS__)\
         default: ;\
     }
 
@@ -135,12 +135,13 @@ void furthest_point_sampling_cuda_forward(torch::Tensor points,
 
     AT_DISPATCH_FLOATING_TYPES(points.scalar_type(), "furthest_point_sampling_cuda_forward_kernel", ([&] 
         {
-            DISPATCH_KERNEL(n_threads, furthest_point_sampling_cuda_forward_kernel, scalar_t, points.size(0), n_threads, 
+            DISPATCH_KERNEL(n_threads, furthest_point_sampling_cuda_forward_kernel, scalar_t, points.size(0),
             points.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>(),
             temp.packed_accessor32<scalar_t, 2, torch::RestrictPtrTraits>(),
             idx.packed_accessor32<int64_t, 2, torch::RestrictPtrTraits>()
             );
         }));
+    CHECK_ERROR();
 }
 
 // Modified from
@@ -213,10 +214,11 @@ void furthest_point_sampling_with_dist_cuda_forward(torch::Tensor points_dist,
 
     AT_DISPATCH_FLOATING_TYPES(points_dist.scalar_type(), "furthest_point_sampling_with_dist_cuda_forward_kernel", ([&] 
         {
-            DISPATCH_KERNEL(n_threads, furthest_point_sampling_with_dist_cuda_forward_kernel, scalar_t, points_dist.size(0), n_threads, 
+            DISPATCH_KERNEL(n_threads, furthest_point_sampling_with_dist_cuda_forward_kernel, scalar_t, points_dist.size(0),
             points_dist.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>(),
             temp.packed_accessor32<scalar_t, 2, torch::RestrictPtrTraits>(),
             idx.packed_accessor32<int64_t, 2, torch::RestrictPtrTraits>()
             );
         }));
+    CHECK_ERROR();
 }

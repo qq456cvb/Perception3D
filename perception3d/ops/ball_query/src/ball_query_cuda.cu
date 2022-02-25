@@ -60,5 +60,6 @@ torch::Tensor ball_query_cuda_forward(torch::Tensor xyz, torch::Tensor center_xy
                                                                                            center_xyz.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>(),
                                                                                            idx.packed_accessor32<int64_t, 3, torch::RestrictPtrTraits>(),
                                                                                            radius, nsample); }));
+    CHECK_ERROR();
     return idx;
 }

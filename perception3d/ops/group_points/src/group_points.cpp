@@ -25,7 +25,7 @@ torch::Tensor group_points_backward(torch::Tensor grad_out, torch::Tensor idx, i
 
     torch::Tensor output = torch::zeros({grad_out.size(0), grad_out.size(1), n}, grad_out.options());
 
-    group_points_cuda_backward(grad_out, idx, output);
+    group_points_cuda_backward(output, idx, grad_out);
 
     return output;
 }

@@ -84,7 +84,7 @@ class QueryAndGroup(nn.Module):
         ----------
         xyz : torch.Tensor
             xyz coordinates of the features (B, N, 3)
-        new_xyz : torch.Tensor
+        center_xyz : torch.Tensor
             centriods (B, npoint, 3)
         features : torch.Tensor
             Descriptors of the features (B, C, N)

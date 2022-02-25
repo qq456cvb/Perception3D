@@ -87,9 +87,9 @@ class ThreeNN(Function):
         assert target.is_contiguous()
         assert source.is_contiguous()
 
-        interpolate_ext.three_nn_forward(target, source)
+        dist, idx = interpolate_ext.three_nn_forward(target, source)
 
-        dist, idx = ctx.mark_non_differentiable(idx)
+        ctx.mark_non_differentiable(idx)
 
         return dist, idx
 

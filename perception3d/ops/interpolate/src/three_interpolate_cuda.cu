@@ -42,6 +42,7 @@ void three_interpolate_cuda_forward(torch::Tensor features, torch::Tensor idx, t
                                                                                                        idx.packed_accessor32<int64_t, 3, torch::RestrictPtrTraits>(),
                                                                                                        weight.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>(),
                                                                                                        out.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>()); }));
+    CHECK_ERROR();
 }
 
 template <typename scalar_t>
@@ -82,4 +83,5 @@ void three_interpolate_cuda_backward(torch::Tensor grad_out, torch::Tensor idx, 
                                                                                                         idx.packed_accessor32<int64_t, 3, torch::RestrictPtrTraits>(),
                                                                                                         weight.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>(),
                                                                                                         grad_features.packed_accessor32<scalar_t, 3, torch::RestrictPtrTraits>()); }));
+    CHECK_ERROR();
 }
