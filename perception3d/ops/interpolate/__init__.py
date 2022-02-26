@@ -7,20 +7,22 @@ import re
 from glob import glob
 import os
 from perception3d.utils import build_ext
+from ..ball_query import square_distance
+from ..group_points import index_points_nocuda
 
-try:
-    from . import interpolate_ext
-except (ImportError, ModuleNotFoundError):
-    import cython
-    build_ext('interpolate_ext', os.path.dirname(__file__))
-    from . import interpolate_ext
+
+if torch.cuda.is_available():
+    try:
+        from . import interpolate_ext
+    except (ImportError, ModuleNotFoundError):
+        import cython
+        build_ext('interpolate_ext', os.path.dirname(__file__))
+        from . import interpolate_ext
 
 
 import torch
 from torch.autograd import Function
 from typing import Tuple
-
-from . import interpolate_ext
 
 
 class ThreeInterpolate(Function):
@@ -65,7 +67,12 @@ class ThreeInterpolate(Function):
         return grad_features, None, None
 
 
-three_interpolate = ThreeInterpolate.apply
+def three_interpolate_nocuda(features, indices, weight):
+    interpolated_points = torch.sum(index_points_nocuda(features, indices) * weight[:, None], dim=-1)
+    return interpolated_points
+
+
+three_interpolate = ThreeInterpolate.apply if torch.cuda.is_available() else three_interpolate_nocuda
 
 
 class ThreeNN(Function):
@@ -98,7 +105,14 @@ class ThreeNN(Function):
         return None, None
 
 
-three_nn = ThreeNN.apply
+def three_nn_nocuda(src, dst):
+    dists = torch.sqrt(square_distance(src, dst))
+    dists, idx = dists.sort(dim=-1)
+    dists, idx = dists[:, :, :3], idx[:, :, :3]  # [B, N, 3]
+    return dists, idx
+
+
+three_nn = ThreeNN.apply if torch.cuda.is_available() else three_nn_nocuda
 
 
 __all__ = ['three_nn', 'three_interpolate']

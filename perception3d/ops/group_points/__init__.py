@@ -7,13 +7,15 @@ import re
 from glob import glob
 import os
 from perception3d.utils import build_ext
+import numpy as np
 
-try:
-    from . import group_points_ext
-except (ImportError, ModuleNotFoundError):
-    import cython
-    build_ext('group_points_ext', os.path.dirname(__file__))
-    from . import group_points_ext
+if torch.cuda.is_available():
+    try:
+        from . import group_points_ext
+    except (ImportError, ModuleNotFoundError):
+        import cython
+        build_ext('group_points_ext', os.path.dirname(__file__))
+        from . import group_points_ext
 
 
 class GroupingOperation(Function):
@@ -58,7 +60,26 @@ class GroupingOperation(Function):
         return grad_features, torch.zeros_like(idx)
 
 
-grouping_operation = GroupingOperation.apply
+def index_points_nocuda(points, idx):
+    """
+    Input:
+        points: input points data, [B, C, N]
+        idx: sample index data, [B, S]
+    Return:
+        new_points:, indexed points data, [B, C, S]
+    """
+    B = points.shape[0]
+    view_shape = list(idx.shape)
+    view_shape[1:] = [1] * (len(view_shape) - 1)
+    repeat_shape = list(idx.shape)
+    repeat_shape[0] = 1
+    batch_indices = torch.arange(B, dtype=torch.long).to(points.device).view(view_shape).repeat(repeat_shape)
+    new_points = points[batch_indices, :, idx]
+    new_points = new_points.permute(0, -1, *np.arange(1, len(list(new_points.shape)) - 1))
+    return new_points
+
+
+grouping_operation = GroupingOperation.apply if torch.cuda.is_available() else index_points_nocuda
 
 
 class QueryAndGroup(nn.Module):

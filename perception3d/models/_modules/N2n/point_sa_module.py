@@ -138,7 +138,7 @@ class BasePointSAModule(nn.Module):
 
         # sample points, (B, num_point, 3), (B, num_point)
         if self.num_point is None:
-            new_xyz, indices = points_xyz, None
+            new_xyz, indices = torch.zeros((points_xyz.shape[0], 1, 3)).to(points_xyz), None
         else:
             new_xyz, indices = self._sample_points(points_xyz, features, indices,
                                                target_xyz)

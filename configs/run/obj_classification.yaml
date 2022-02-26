@@ -20,8 +20,8 @@ dataloader_cfg:
 
 train:
   <<: ${.default_cfg}
-  gradient_clip_val: 1.
-  gradient_clip_algorithm: 'norm'
+  # gradient_clip_val: 1.
+  # gradient_clip_algorithm: 'norm'
   dataloader:
     dataset:
       split: 'train'

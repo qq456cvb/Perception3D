@@ -63,6 +63,62 @@ if __name__ == '__main__':
                     metric = self.cfg['train']['metric_fn'](preds=outputs['preds'], targets=outputs['targets'])
                     for k in metric:
                         self.log(k, metric[k])
+                        
+        if 'val' in config_args_all:
+            def val_dataloader(self):
+                return init_pyinstance(self.cfg['val'], 'dataloader')
+            
+            def validation_step(self, batch, batch_idx):
+                preds = self.model(batch)
+                
+                if 'loss_fn' in config_args_all['val']:
+                    init_pyinstance(config_args_all['val'], 'loss_fn')
+                    loss_fn = self.cfg['val']['loss_fn']
+                    loss = loss_fn(preds, batch)
+                    total_loss = sum(loss.values())
+                    for k in loss:
+                        self.log(k, loss[k].item(), prog_bar=True, on_step=True)
+                    self.log('loss:all', total_loss.item(), prog_bar=True, on_step=True)
+                
+                for k, pred in preds.items():
+                    if isinstance(pred, torch.Tensor):
+                        preds[k] = pred.detach()
+                return dict(preds=preds, targets=batch)
+            
+            if 'metric_fn' in config_args_all['val']:
+                init_pyinstance(config_args_all['val'], 'metric_fn')
+                def validation_epoch_end(self, outputs):
+                    metric = self.cfg['val']['metric_fn'](preds=outputs['preds'], targets=outputs['targets'])
+                    for k in metric:
+                        self.log(k, metric[k])
+        
+        if 'test' in config_args_all:
+            def test_dataloader(self):
+                return init_pyinstance(self.cfg['test'], 'dataloader')
+            
+            def test_step(self, batch, batch_idx):
+                preds = self.model(batch)
+                
+                if 'loss_fn' in config_args_all['test']:
+                    init_pyinstance(config_args_all['test'], 'loss_fn')
+                    loss_fn = self.cfg['test']['loss_fn']
+                    loss = loss_fn(preds, batch)
+                    total_loss = sum(loss.values())
+                    for k in loss:
+                        self.log(k, loss[k].item(), prog_bar=True, on_step=True)
+                    self.log('loss:all', total_loss.item(), prog_bar=True, on_step=True)
+                
+                for k, pred in preds.items():
+                    if isinstance(pred, torch.Tensor):
+                        preds[k] = pred.detach()
+                return dict(preds=preds, targets=batch)
+            
+            if 'metric_fn' in config_args_all['test']:
+                init_pyinstance(config_args_all['test'], 'metric_fn')
+                def test_epoch_end(self, outputs):
+                    metric = self.cfg['test']['metric_fn'](preds=outputs['preds'], targets=outputs['targets'])
+                    for k in metric:
+                        self.log(k, metric[k])
         
         def get_progress_bar_dict(self):
             tqdm_dict = super().get_progress_bar_dict()

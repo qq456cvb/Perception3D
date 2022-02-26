@@ -7,12 +7,14 @@ from glob import glob
 import os
 from perception3d.utils import build_ext
 
-try:
-    from . import furthest_point_sample_ext
-except (ImportError, ModuleNotFoundError):
-    import cython
-    build_ext('furthest_point_sample_ext', os.path.dirname(__file__))
-    from . import furthest_point_sample_ext
+
+if torch.cuda.is_available():
+    try:
+        from . import furthest_point_sample_ext
+    except (ImportError, ModuleNotFoundError):
+        import cython
+        build_ext('furthest_point_sample_ext', os.path.dirname(__file__))
+        from . import furthest_point_sample_ext
 
 
 class FurthestPointSampling(Function):
@@ -69,7 +71,32 @@ class FurthestPointSamplingWithDist(Function):
         return None, None
 
 
-furthest_point_sample = FurthestPointSampling.apply
+# https://github.com/yanx27/Pointnet_Pointnet2_pytorch/blob/master/models/pointnet2_utils.py
+def furthest_point_sample_nocuda(xyz, npoint):
+    """
+    Input:
+        xyz: pointcloud data, [B, N, 3]
+        npoint: number of samples
+    Return:
+        centroids: sampled pointcloud index, [B, npoint]
+    """
+    device = xyz.device
+    B, N, C = xyz.shape
+    centroids = torch.zeros(B, npoint, dtype=torch.long).to(device)
+    distance = torch.ones(B, N).to(device) * 1e10
+    farthest = torch.randint(0, N, (B,), dtype=torch.long).to(device)
+    batch_indices = torch.arange(B, dtype=torch.long).to(device)
+    for i in range(npoint):
+        centroids[:, i] = farthest
+        centroid = xyz[batch_indices, farthest, :].view(B, 1, 3)
+        dist = torch.sum((xyz - centroid) ** 2, -1)
+        mask = dist < distance
+        distance[mask] = dist[mask]
+        farthest = torch.max(distance, -1)[1]
+    return centroids
+
+
+furthest_point_sample = FurthestPointSampling.apply if torch.cuda.is_available() else furthest_point_sample_nocuda
 furthest_point_sample_with_dist = FurthestPointSamplingWithDist.apply
 
 __all__ = ['furthest_point_sample', 'furthest_point_sample_with_dist']
