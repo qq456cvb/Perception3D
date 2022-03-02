@@ -8,9 +8,15 @@ Welcome to Perception3D's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Getting Started
 
+   installation
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Tutorial
+   
+   config
 
 Indices and tables
 ==================
