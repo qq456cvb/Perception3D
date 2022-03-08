@@ -2,7 +2,7 @@ default_cfg:
   max_epochs: 100 
   gpus: [0]
   accelerator: 'gpu'
-  strategy: 'ddp'
+  strategy: 'dp'
   log_dir: 'shapenet_log'
   dataloader: !torch.utils.data.DataLoader
     <<: ${.dataloader_cfg}

@@ -9,15 +9,19 @@ import os
 from perception3d.utils import build_ext
 from ..ball_query import square_distance
 from ..group_points import index_points_nocuda
+import warnings
 
-
+has_ext = True
 if torch.cuda.is_available():
     try:
         from . import interpolate_ext
     except (ImportError, ModuleNotFoundError):
-        import cython
         build_ext('interpolate_ext', os.path.dirname(__file__))
-        from . import interpolate_ext
+        try:
+            from . import interpolate_ext
+        except (ImportError, ModuleNotFoundError):
+            warnings.warn('Error building extension for {}'.format(os.path.basename(os.path.dirname(__file__))))
+            has_ext = False
 
 
 import torch
@@ -72,7 +76,7 @@ def three_interpolate_nocuda(features, indices, weight):
     return interpolated_points
 
 
-three_interpolate = ThreeInterpolate.apply if torch.cuda.is_available() else three_interpolate_nocuda
+three_interpolate = ThreeInterpolate.apply if has_ext else three_interpolate_nocuda
 
 
 class ThreeNN(Function):
@@ -112,7 +116,7 @@ def three_nn_nocuda(src, dst):
     return dists, idx
 
 
-three_nn = ThreeNN.apply if torch.cuda.is_available() else three_nn_nocuda
+three_nn = ThreeNN.apply if has_ext else three_nn_nocuda
 
 
 __all__ = ['three_nn', 'three_interpolate']

@@ -8,14 +8,20 @@ from glob import glob
 import os
 from perception3d.utils import build_ext
 import numpy as np
+import warnings
 
+has_ext = True
 if torch.cuda.is_available():
     try:
         from . import group_points_ext
     except (ImportError, ModuleNotFoundError):
         import cython
         build_ext('group_points_ext', os.path.dirname(__file__))
-        from . import group_points_ext
+        try:
+            from . import group_points_ext
+        except (ImportError, ModuleNotFoundError):
+            warnings.warn('Error building extension for {}'.format(os.path.basename(os.path.dirname(__file__))))
+            has_ext = False
 
 
 class GroupingOperation(Function):
@@ -79,7 +85,7 @@ def index_points_nocuda(points, idx):
     return new_points
 
 
-grouping_operation = GroupingOperation.apply if torch.cuda.is_available() else index_points_nocuda
+grouping_operation = GroupingOperation.apply if has_ext else index_points_nocuda
 
 
 class QueryAndGroup(nn.Module):

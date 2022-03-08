@@ -3,8 +3,8 @@ import inspect
 from typing import List
 import torch
 from torch import nn as nn
-from perception3d.models._modules.N2n.point_sa_module import PointSAModuleMSG
-from perception3d.models._modules.n2N.point_fp_module import PointFPModule
+from perception3d.models._modules.aggregation.point_sa_module import PointSAModuleMSG
+from perception3d.models._modules.propagation.point_fp_module import PointFPModule
 
 class PointNet2ClsMSG(nn.Module):
     def __init__(self,

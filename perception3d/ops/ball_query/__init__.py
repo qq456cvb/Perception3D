@@ -4,14 +4,20 @@ from perception3d.utils import build_ext
 import os
 import torch
 from torch.autograd import Function
+import warnings
 
+has_ext = True
 if torch.cuda.is_available():
     try:
         from . import ball_query_ext
     except (ImportError, ModuleNotFoundError):
         import cython
         build_ext('ball_query_ext', os.path.dirname(__file__))
-        from . import ball_query_ext
+        try:
+            from . import ball_query_ext
+        except (ImportError, ModuleNotFoundError):
+            warnings.warn('Error building extension for {}'.format(os.path.basename(os.path.dirname(__file__))))
+            has_ext = False
 
 class BallQuery(Function):
     @staticmethod
@@ -90,6 +96,6 @@ def ball_query_nocuda(xyz, new_xyz, radius, nsample):
     return group_idx
 
 
-ball_query = BallQuery.apply if torch.cuda.is_available() else ball_query_nocuda
+ball_query = BallQuery.apply if has_ext else ball_query_nocuda
 
 __all__ = ['ball_query']

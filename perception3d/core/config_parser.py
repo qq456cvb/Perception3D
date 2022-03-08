@@ -1,8 +1,4 @@
-import types
-from typing import Iterable
 import warnings
-from attr import resolve_types
-import hydra
 from omegaconf import DictConfig, OmegaConf
 from ruamel.yaml import YAML
 from ruamel.yaml.nodes import (SequenceNode, MappingNode, ScalarNode)
@@ -13,8 +9,7 @@ import pathlib
 import regex as re
 import io
 import perception3d
-import yaml
-from functools import lru_cache, partial
+from functools import partial
 import importlib
 
 
@@ -241,7 +236,7 @@ class ConfigParser(object):
     
     def parse_recursive(self, file):
         if isinstance(file, (str, pathlib.Path)):
-            file_path = os.path.abspath(file)
+            file_path = os.path.abspath(file).replace('\\', '/')
             file_path_noext = os.path.splitext(file_path)[0]
             base_path = self.base_path
             todos = []
@@ -259,9 +254,9 @@ class ConfigParser(object):
                 else:
                     path = os.path.join(base_path, s.replace('.', '/'))
                 
-                res = str(pathlib.Path(path).resolve())
+                res = str(pathlib.Path(path).resolve()).replace('\\', '/')
                 todos.append(res)
-                return '${' + os.path.relpath(res, base_path).replace('/', '.') + '}'
+                return '${' + os.path.relpath(res, base_path).replace('\\', '/').replace('/', '.') + '}'
             
             res = re.sub(r'(?<!\s*#\s.*)\$\{[\w|\.]+\}', find_ref, obj)
             self.file_cache[file_path] = res
@@ -269,11 +264,11 @@ class ConfigParser(object):
                 todos.append(file_path_noext)
                 
             for path in todos:
-                relpath = os.path.relpath(path, base_path)
+                relpath = os.path.relpath(path, base_path).replace('\\', '/')
                 locs = relpath.split('/')
                 # print(path)
                 for i in range(len(locs)):
-                    cand_path = os.path.join(base_path, *locs[:i+1])
+                    cand_path = os.path.join(base_path, *locs[:i+1]).replace('\\', '/')
                     if os.path.exists(cand_path + '.yml') or os.path.exists(cand_path + '.yaml'):
                         yml_path = cand_path + '.yml' if os.path.exists(cand_path + '.yml') else cand_path + '.yaml'
                         self._parse_node(locs[:i+1], yml_path)
@@ -283,9 +278,13 @@ class ConfigParser(object):
             raise TypeError('unknown file type')
         
     def parse(self, file):
+        # convert path into unix format
+        file = file.replace('\\', '/')
+        
         self.tree = {}
-        self.base_path = str(pathlib.Path(os.path.join(os.path.dirname(os.path.abspath(perception3d.__file__)), '../configs')).resolve())
-        mod = os.path.splitext(os.path.relpath(file, self.base_path))[0].replace('/', '.')
+        self.base_path = str(pathlib.Path(os.path.join(os.path.dirname(os.path.abspath(perception3d.__file__)), '../configs')).resolve()).replace('\\', '/')
+        mod = os.path.splitext(os.path.relpath(file, self.base_path).replace('\\', '/'))[0].replace('/', '.')
+
         self.parse_recursive(file)
         res = self._write_tree()
         

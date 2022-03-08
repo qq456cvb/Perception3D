@@ -11,7 +11,8 @@ You can install them with the following command:
 .. code-block:: rst
 
     pip install torch==1.10.2+cu102 torchvision==0.11.3+cu102 -f https://download.pytorch.org/whl/cu102/torch_stable.html
-    pip install pytorch-lightning
+    conda install protobuf
+    pip install ruamel.yaml==0.16.13 omegaconf==2.0.5 pytorch-lightning==1.5.10
 
 Demo
 ------

@@ -1,8 +1,8 @@
 from collections import OrderedDict
 from typing import List
 from perception3d.models.classification.object.pointnet2_cls_msg import PointNet2ClsMSG
-from perception3d.models._modules.N2n.point_sa_module import PointSAModuleMSG
-from perception3d.models._modules.n2N.point_fp_module import PointFPModule
+from perception3d.models._modules.aggregation.point_sa_module import PointSAModuleMSG
+from perception3d.models._modules.propagation.point_fp_module import PointFPModule
 import torch.nn as nn
 import torch
 import torch.nn.functional as F

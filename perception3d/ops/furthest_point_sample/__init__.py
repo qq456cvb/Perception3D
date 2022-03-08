@@ -6,15 +6,20 @@ import re
 from glob import glob
 import os
 from perception3d.utils import build_ext
+import warnings
 
 
+has_ext = True
 if torch.cuda.is_available():
     try:
         from . import furthest_point_sample_ext
     except (ImportError, ModuleNotFoundError):
-        import cython
         build_ext('furthest_point_sample_ext', os.path.dirname(__file__))
-        from . import furthest_point_sample_ext
+        try:
+            from . import furthest_point_sample_ext
+        except (ImportError, ModuleNotFoundError):
+            warnings.warn('Error building extension for {}'.format(os.path.basename(os.path.dirname(__file__))))
+            has_ext = False
 
 
 class FurthestPointSampling(Function):
@@ -96,7 +101,7 @@ def furthest_point_sample_nocuda(xyz, npoint):
     return centroids
 
 
-furthest_point_sample = FurthestPointSampling.apply if torch.cuda.is_available() else furthest_point_sample_nocuda
+furthest_point_sample = FurthestPointSampling.apply if has_ext else furthest_point_sample_nocuda
 furthest_point_sample_with_dist = FurthestPointSamplingWithDist.apply
 
 __all__ = ['furthest_point_sample', 'furthest_point_sample_with_dist']

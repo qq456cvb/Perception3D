@@ -5,11 +5,11 @@
 #include "../../_common/macro.h"
 #include <vector>
 
-int furthest_point_sampling_cuda_forward(torch::Tensor points,
+void furthest_point_sampling_cuda_forward(torch::Tensor points,
                                          torch::Tensor temp,
                                          torch::Tensor idx);
 
-int furthest_point_sampling_with_dist_cuda_forward(torch::Tensor points_dist,
+void furthest_point_sampling_with_dist_cuda_forward(torch::Tensor points_dist,
                                                    torch::Tensor temp,
                                                    torch::Tensor idx);
 

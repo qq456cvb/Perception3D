@@ -14,6 +14,7 @@ def build_ext(name, working_dir):
     src += "ext_modules=[\n"
     src += f"CUDAExtension('{name}', [\n"
     for fn in src_files:
+        fn = fn.replace('\\', '/')
         src += f"'{fn}',\n"
     src += "])\n"
     src += "],\n"
@@ -25,6 +26,7 @@ def build_ext(name, working_dir):
     with open(setup_tmpfile, 'w') as f:
         f.write(src)
     
+    print(src)
     if working_dir is not None:
         wd = os.getcwd()
         os.chdir(working_dir)
