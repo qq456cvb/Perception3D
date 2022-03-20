@@ -36,6 +36,8 @@ jobs:
         with:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
+          auto-activate-base: true
+          activate-environment: ""
       - name: Install dependencies
         run: conda install -y protobuf pytorch torchvision torchaudio cpuonly "ruamel.yaml<0.17" pytorch-lightning omegaconf -c conda-forge -c pytorch
       # - uses: actions/download-artifact@v2
