@@ -4,7 +4,7 @@ Installation
 
 Prerequisites
 -------------
-Perception3D is tested with Pytorch>=1.3.1, CUDA>=10.0, Pytorch Lightning>=1.4.1.
+Perception3D is tested with Pytorch>=1.3.1, CUDA>=10.0, Pytorch Lightning>=1.4.1. It also requires SciPy and regex.
 
 You can install them with the following command:
 
@@ -12,7 +12,7 @@ You can install them with the following command:
 
     pip install torch==1.10.2+cu102 torchvision==0.11.3+cu102 -f https://download.pytorch.org/whl/cu102/torch_stable.html
     conda install protobuf
-    pip install ruamel.yaml==0.16.13 omegaconf==2.0.5 pytorch-lightning==1.5.10
+    pip install ruamel.yaml==0.16.13 omegaconf==2.0.5 pytorch-lightning==1.5.10 scipy regex
 
 Demo
 ------
