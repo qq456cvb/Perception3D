@@ -1,4 +1,5 @@
-root: 'shapenet'
+root: modelnet10
+nclasses: 10
 preload: False
 num_sample: 2048
 transformations:

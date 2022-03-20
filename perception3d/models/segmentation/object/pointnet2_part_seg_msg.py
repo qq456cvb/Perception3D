@@ -45,12 +45,13 @@ class PointNet2SegMSG(PointNet2ClsMSG):
             if bn:
                 mlp.add_module(f'layer{i}_bn', nn.BatchNorm1d(out_mlp_channels[i + 1]))
             mlp.add_module(f'layer{i}_relu', nn.ReLU())
-            mlp.add_module(f'layer{i}_dropout', nn.Dropout(out_dropouts[i]))
+            if out_dropouts[i] > 0:
+                mlp.add_module(f'layer{i}_dropout', nn.Dropout(out_dropouts[i]))
             self.out_mlps.append(mlp)
 
         self.out_mlps.append(nn.Sequential(OrderedDict([(f'layer{len(out_mlp_channels) - 1}', nn.Conv1d(out_mlp_channels[-1], num_seg_class, 1))])))
         
-    def forward(self, inputs):
+    def forward(self, **inputs):
         xyz = inputs['points']
         if 'features' in inputs:
             features = inputs['features']

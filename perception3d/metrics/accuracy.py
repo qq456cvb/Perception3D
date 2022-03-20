@@ -1,7 +1,7 @@
+import numpy as np
 from perception3d.core.decorator import named_module
 from perception3d.metrics._base import BaseMetric
-import torch.nn.functional as F
-import torch
+from scipy.special import softmax
 import inspect
 
 
@@ -11,6 +11,6 @@ class AccuracyMetric(BaseMetric):
         self.dim = dim
         
     def __call__(self, *, preds, targets):
-        prob = F.softmax(preds['pred_label_logit'], dim=self.dim)
-        return {'metric:acc': torch.sum(prob.argmax(self.dim) == targets['gt_label'])}
+        prob = softmax(preds['pred_label_logit'], axis=self.dim)
+        return {'metric:acc': np.mean((np.argmax(prob, self.dim) == targets['gt_label']).astype(np.float32))}
     

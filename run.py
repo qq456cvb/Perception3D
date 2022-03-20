@@ -6,6 +6,9 @@ from perception3d.core.config_parser import init_pyinstance
 from perception3d.core.config_parser import ConfigParser
 from pytorch_lightning.core import LightningModule
 import torch
+import logging
+
+from perception3d.core.gathering import gather_results, merge_dict, split_dict, tensor2numpy
 
 
 if __name__ == '__main__':
@@ -17,6 +20,7 @@ if __name__ == '__main__':
     config_args_all = ConfigParser().parse(args.config_path)
     config_args_all['__phase'] = args.phase
     
+    logger = logging.getLogger('pytorch_lightning')
     # if define a global model
     if 'model' in config_args_all:
         for phase in ['train', 'val', 'test']:
@@ -44,87 +48,86 @@ if __name__ == '__main__':
             if 'loss_fn' in config_args_all['train']:
                 init_pyinstance(config_args_all['train'], 'loss_fn')
                 def training_step(self, batch, batch_idx):
-                    preds = self.model(batch)
+                    preds = self.model(**batch)
                     
                     loss_fn = self.cfg['train']['loss_fn']
                     loss = loss_fn(preds, batch)
                     total_loss = sum(loss.values())
                     for k in loss:
-                        self.log(k, loss[k].item(), prog_bar=True, on_step=True)
-                    
-                    for k, pred in preds.items():
-                        if isinstance(pred, torch.Tensor):
-                            preds[k] = pred.detach()
-                    return dict(loss=total_loss, preds=preds, targets=batch)
+                        self.log('train/' + k, loss[k].item(), prog_bar=True)
+                    return merge_dict(tensor2numpy(preds), tensor2numpy(batch), {'loss': total_loss})
             
             if 'metric_fn' in config_args_all['train']:
                 init_pyinstance(config_args_all['train'], 'metric_fn')
                 def training_epoch_end(self, outputs):
-                    metric = self.cfg['train']['metric_fn'](preds=outputs['preds'], targets=outputs['targets'])
+                    outputs = gather_results(outputs, config_args['strategy'] == 'ddp')
+                    preds, targets, _ = split_dict(outputs)
+                    metric = self.cfg['train']['metric_fn'](preds=preds, targets=targets)
                     for k in metric:
-                        self.log(k, metric[k])
+                        self.log('train/' + k, metric[k])
+                        logger.info(f'train/{k}: {metric[k]}')
                         
         if 'val' in config_args_all:
             def val_dataloader(self):
                 return init_pyinstance(self.cfg['val'], 'dataloader')
             
             def validation_step(self, batch, batch_idx):
-                preds = self.model(batch)
+                preds = self.model(**batch)
                 
                 if 'loss_fn' in config_args_all['val']:
                     init_pyinstance(config_args_all['val'], 'loss_fn')
                     loss_fn = self.cfg['val']['loss_fn']
                     loss = loss_fn(preds, batch)
-                    total_loss = sum(loss.values())
+                    # total_loss = sum(loss.values())
                     for k in loss:
-                        self.log(k, loss[k].item(), prog_bar=True, on_step=True)
-                    self.log('loss:all', total_loss.item(), prog_bar=True, on_step=True)
-                
-                for k, pred in preds.items():
-                    if isinstance(pred, torch.Tensor):
-                        preds[k] = pred.detach()
-                return dict(preds=preds, targets=batch)
+                        self.log('val/' + k, loss[k].item(), prog_bar=True)
+                return merge_dict(tensor2numpy(preds), tensor2numpy(batch))
             
             if 'metric_fn' in config_args_all['val']:
                 init_pyinstance(config_args_all['val'], 'metric_fn')
                 def validation_epoch_end(self, outputs):
-                    metric = self.cfg['val']['metric_fn'](preds=outputs['preds'], targets=outputs['targets'])
+                    outputs = gather_results(outputs, config_args['strategy'] == 'ddp')
+                    preds, targets, _ = split_dict(outputs)
+                    metric = self.cfg['val']['metric_fn'](preds=preds, targets=targets)
                     for k in metric:
-                        self.log(k, metric[k])
+                        self.log('val/' + k, metric[k])
+                        logger.info(f'val/{k}: {metric[k]}')
         
         if 'test' in config_args_all:
             def test_dataloader(self):
                 return init_pyinstance(self.cfg['test'], 'dataloader')
             
             def test_step(self, batch, batch_idx):
-                preds = self.model(batch)
+                preds = self.model(**batch)
                 
                 if 'loss_fn' in config_args_all['test']:
                     init_pyinstance(config_args_all['test'], 'loss_fn')
                     loss_fn = self.cfg['test']['loss_fn']
                     loss = loss_fn(preds, batch)
-                    total_loss = sum(loss.values())
+                    # total_loss = sum(loss.values())
                     for k in loss:
-                        self.log(k, loss[k].item(), prog_bar=True, on_step=True)
-                    self.log('loss:all', total_loss.item(), prog_bar=True, on_step=True)
-                
-                for k, pred in preds.items():
-                    if isinstance(pred, torch.Tensor):
-                        preds[k] = pred.detach()
-                return dict(preds=preds, targets=batch)
+                        self.log('test/' + k, loss[k].item())
+                return merge_dict(tensor2numpy(preds), tensor2numpy(batch))
             
             if 'metric_fn' in config_args_all['test']:
                 init_pyinstance(config_args_all['test'], 'metric_fn')
                 def test_epoch_end(self, outputs):
+                    outputs = gather_results(outputs, config_args['strategy'] == 'ddp')
+                    preds, targets, _ = split_dict(outputs)
                     metric = self.cfg['test']['metric_fn'](preds=outputs['preds'], targets=outputs['targets'])
                     for k in metric:
-                        self.log(k, metric[k])
+                        self.log('test/' + k, metric[k])
+                        logger.info(f'test/{k}: {metric[k]}')
+        
+        def forward(self, **x):
+            return self.model(**x)
         
         def get_progress_bar_dict(self):
             tqdm_dict = super().get_progress_bar_dict()
             tqdm_dict.pop("v_num", None)
-            tqdm_dict['loss:all'] = tqdm_dict['loss']
-            del tqdm_dict['loss']
+            tqdm_dict.pop("loss", None)
+            # tqdm_dict['loss:all'] = tqdm_dict['loss']
+            # del tqdm_dict['loss']
             return tqdm_dict
 
         def configure_optimizers(self):

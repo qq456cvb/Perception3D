@@ -3,20 +3,20 @@ default_cfg:
   gpus: [0]
   accelerator: 'gpu'
   strategy: 'dp'
-  log_dir: 'modelnet_log'
+  log_dir: 'shapenet_log'
   dataloader: !torch.utils.data.DataLoader
     <<: ${.dataloader_cfg}
   
-model: !perception3d.models.classification.object.pointnet_cls.PointNetCls
-  <<: ${models.classification.object.pointnet_cls}
+model: !perception3d.models.segmentation.object.pointnet2_part_seg_msg.PointNet2SegMSG
+  <<: ${models.segmentation.object.pointnet2_part_seg_msg}
 
 <<: ${optimizations.default}
 
 dataloader_cfg:
-  batch_size: 16
+  batch_size: 2
   num_workers: 4
-  dataset: !perception3d.datasets.modelnet.ModelNetClsDataset
-    <<: ${datasets.modelnet}
+  dataset: !perception3d.datasets.shapenet.ShapeNetPartDataset
+    <<: ${datasets.shapenet}
 
 train:
   <<: ${.default_cfg}
@@ -28,20 +28,19 @@ train:
     shuffle: True
     drop_last: True
   loss_fn: !perception3d.losses.cross_entropy.CrossEntropyLoss
-  metric_fn: !perception3d.metrics.accuracy.AccuracyMetric
+
 val:
   <<: ${.default_cfg}
   dataloader:
     dataset:
-      split: 'test'
+      split: 'val'
     shuffle: False
   loss_fn: !perception3d.losses.cross_entropy.CrossEntropyLoss
-  metric_fn: !perception3d.metrics.accuracy.AccuracyMetric
+
 test:
   <<: ${.default_cfg}
   dataloader:
     dataset:
-      split: 'test'
+      split: 'val'
     shuffle: False
-  metric_fn: !perception3d.metrics.accuracy.AccuracyMetric
 

@@ -1,0 +1,5 @@
+in_channel: 3
+num_class: 10
+out_mlp_channels: [1024, 512, 256]
+out_dropouts: [0, 0, 0.4]
+bn: True

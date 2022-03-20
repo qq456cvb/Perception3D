@@ -52,7 +52,8 @@ class PointNet2ClsMSG(nn.Module):
                 mlp.add_module(f'layer{i}_bn', nn.BatchNorm1d(
                     out_mlp_channels[i + 1]))
             mlp.add_module(f'layer{i}_relu', nn.ReLU())
-            mlp.add_module(f'layer{i}_dropout', nn.Dropout(out_dropouts[i]))
+            if out_dropouts[i] > 0:
+                mlp.add_module(f'layer{i}_dropout', nn.Dropout(out_dropouts[i]))
             self.out_mlps.append(mlp)
 
         self.out_mlps.append(nn.Sequential(OrderedDict(
@@ -85,4 +86,4 @@ class PointNet2ClsMSG(nn.Module):
         for mlp in self.out_mlps:
             features = mlp(features)
         label_logit = features
-        return {'label_logit': label_logit}
+        return {'pred_label_logit': label_logit}

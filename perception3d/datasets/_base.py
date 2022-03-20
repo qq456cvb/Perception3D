@@ -1,5 +1,5 @@
 from urllib.parse import urlparse
-from perception3d.augmentations._base import Compose, Identity
+from perception3d.transformations._base import Compose, Identity
 import os
 import torch
 import sys
@@ -46,7 +46,7 @@ def download(url, save_dir, unzip=True, delete_after=True):
 class BaseDataset(object):
     def __init__(self, **kwargs) -> None:
         self.__dict__.update(kwargs)
-        self.transform = Compose(kwargs['augmentations']) if 'augmentations' in kwargs else Identity()
+        self.transform = Compose(kwargs['transformations']) if 'transformations' in kwargs else Identity()
     
     def get_item(self, idx):
         raise NotImplementedError
