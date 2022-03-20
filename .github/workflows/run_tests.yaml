@@ -37,7 +37,7 @@ jobs:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: conda install protobuf pytorch torchvision torchaudio cpuonly ruamel.yaml<0.17 pytorch-lightning omegaconf -c conda-forge -c pytorch
+        run: conda install -y protobuf pytorch torchvision torchaudio cpuonly "ruamel.yaml<0.17" pytorch-lightning omegaconf -c conda-forge -c pytorch
       # - uses: actions/download-artifact@v2
       #   with:
       #     name: artifact
