@@ -2,7 +2,7 @@ import warnings
 from omegaconf import DictConfig, OmegaConf
 from ruamel.yaml import YAML
 from ruamel.yaml.nodes import (SequenceNode, MappingNode, ScalarNode)
-from ruamel.yaml.compat import Hashable
+from collections.abc import Hashable
 from ruamel.yaml.constructor import SafeConstructor, DuplicateKeyError, DuplicateKeyFutureWarning, ConstructorError, BaseConstructor
 import os
 import pathlib
@@ -11,7 +11,6 @@ import io
 import perception3d
 from functools import partial
 import importlib
-
 
 # Recursive dictionary merge
 # Copyright (C) 2016 Paul Durivage <pauldurivage+github@gmail.com>
