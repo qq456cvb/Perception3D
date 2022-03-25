@@ -1,6 +1,9 @@
 root: modelnet10
 nclasses: 10
 preload: False
-num_sample: 2048
 transformations:
+  - !perception3d.transformations.object_trans.SampleMeshUniform
+    num_sample: 10000
+  - !perception3d.transformations.object_trans.FurthestPointSample
+    num_sample: 2048
   - !perception3d.transformations.object_trans.NormalizeUnitSphere

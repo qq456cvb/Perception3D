@@ -18,9 +18,9 @@ def sample_vertex_from_mesh(vertex, facet, colors=None, rnd_idxs=None, u=None, v
     if colors is not None:
         cx, cy, cz = cx[rnd_idxs], cy[rnd_idxs], cz[rnd_idxs]
     if u is None:
-        u = np.random.rand(vx.shape[0], 1)
+        u = np.random.rand(vx.shape[0], 1).astype(vertex.dtype)
     if v is None:
-        v = np.random.rand(vx.shape[0], 1)
+        v = np.random.rand(vx.shape[0], 1).astype(vertex.dtype)
     mask = u + v > 1
     u[mask] = 1 - u[mask]
     v[mask] = 1 - v[mask]

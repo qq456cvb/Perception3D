@@ -8,7 +8,7 @@ from perception3d.utils.reader import read_off, sample_vertex_from_mesh
 
 
 class ModelNetClsDataset(MemoryCachedDataset):
-    def __init__(self, *, root, nclasses, split, num_sample, **kwargs):
+    def __init__(self, *, root, nclasses, split, **kwargs):
         assert nclasses in [10, 40]
         if nclasses == 10:
             self.dataset_url = 'https://vision.princeton.edu/projects/2014/3DShapeNets/ModelNet10.zip'
@@ -17,7 +17,6 @@ class ModelNetClsDataset(MemoryCachedDataset):
             
         self.root = root
         self.split = split
-        self.num_sample = num_sample
 
         if not os.path.exists(self.root) or not list(filter(lambda fn: fn[-4:] != '.zip', os.listdir(self.root))):
             print('Downloading ModelNet data files...')
@@ -48,14 +47,13 @@ class ModelNetClsDataset(MemoryCachedDataset):
     
     def get_item(self, idx):
         fn = self.records[idx]
-        pts, faces = read_off(open(fn))
-        pts = sample_vertex_from_mesh(pts, faces, num_samples=self.num_sample)[0]
+        vertexs, faces = read_off(open(fn))
         label = self.classes[idx]
         
-        return {'points': pts.astype(np.float32), 'gt_label': label}
+        return {'vertexs': vertexs.astype(np.float32),'faces': faces.astype(int), 'gt_label': label}
         
         
 if __name__ == '__main__':
-    ds = ModelNetClsDataset(root='modelnet10', nclasses=10, split='test', num_sample=2048)
+    ds = ModelNetClsDataset(root='modelnet10', nclasses=10, split='test')
     for d in ds:
         print(d['points'].shape, d['gt_label'])
