@@ -89,14 +89,14 @@ class DiskCachedDataset(CachedDataset):
         self._cache_root = kwargs['cache_dir'] if 'cache_dir' in kwargs else os.path.join(os.getcwd(), 'cache_dir')
         
     def __get_cache__(self, idx):
-        path = os.path.join(self._cache_root, '{}.th')
+        path = os.path.join(self._cache_root, f'{idx}.th')
         if os.path.exists(path):
             return torch.load(path)
         else:
             return None
     
     def __put_cache__(self, idx, item):
-        path = os.path.join(self._cache_root, '{}.th')
+        path = os.path.join(self._cache_root, f'{idx}.th')
         if not os.path.exists(path):
             torch.save(item, path)
             
