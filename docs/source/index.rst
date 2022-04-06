@@ -17,6 +17,14 @@ Welcome to Perception3D's documentation!
    :caption: Tutorial
    
    config
+   dataset
+   loss
+   metric
+   model
+   op
+   transformation
+
+
 
 Indices and tables
 ==================

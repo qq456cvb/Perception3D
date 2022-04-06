@@ -3,7 +3,6 @@ Configuration System
 
 Learn about configs
 -------------------
-
 Perception3D disentangles code into static Python class definitions and dynamic runtime configurations.
 
 Static Python class definitions are the standard Python code that defines various models, datasets, etc. They are placed under the folder ``perception3d/``.
@@ -46,5 +45,5 @@ Line 8 defines the keyword arguments that would pass into the contructor of ``to
 One could also specifiy a absolute reference, as shown in line 14, where ``datasets.shapenet`` refers to the configuration located under ``configs/datasets/shapenet.yaml``.
 
 .. note:: 
-    Perception3D automatically determines the type of reference, which can be a YAML file ((e.g., ``datasets.shapenet`` -> ``configs/datasets/shapenet.yaml``), or a variable in the YAML file (e.g., ``datasets.shapenet.num_sample`` -> ``num_sample`` variable in ``configs/datasets/shapenet.yaml``), and you do not need to explicitly specify the ``.yaml`` extension.
+    Perception3D automatically determines the type of reference, which can be a YAML file (e.g., ``datasets.shapenet`` -> ``configs/datasets/shapenet.yaml``), or a variable in the YAML file (e.g., ``datasets.shapenet.num_sample`` -> ``num_sample`` variable in ``configs/datasets/shapenet.yaml``), and you do not need to explicitly specify the ``.yaml`` extension.
 

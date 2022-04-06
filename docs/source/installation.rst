@@ -15,5 +15,5 @@ You can install them with the following command:
     pip install ruamel.yaml==0.16.13 omegaconf==2.0.5 pytorch-lightning==1.5.10 scipy regex
 
 Demo
-------
+----
 After installing the prerequisites, then you are ready to go! You can directly run ``run.py`` under the root directory of Perception3D.
