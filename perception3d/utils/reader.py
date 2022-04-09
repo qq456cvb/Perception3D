@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 
 
 def sample_vertex_from_mesh(vertex, facet, colors=None, rnd_idxs=None, u=None, v=None, num_samples=2048):
@@ -10,6 +11,10 @@ def sample_vertex_from_mesh(vertex, facet, colors=None, rnd_idxs=None, u=None, v
     if colors is not None:
         cx, cy, cz = trianlges_color[:, 0, :], trianlges_color[:, 1, :], trianlges_color[:, 2, :]
     triangle_areas = 0.5 * np.linalg.norm(np.cross(vy - vx, vz - vx), axis=1)
+    if np.sum(triangle_areas) < 1e-7:
+        warnings.warn('Warning: not a good triangle mesh')
+        idx = np.random.randint(0, vertex.shape[0], (num_samples,))
+        return vertex[idx] / 1e2
     probs = triangle_areas / np.sum(triangle_areas)
 
     if rnd_idxs is None:
