@@ -3,7 +3,8 @@ import warnings
 
 
 def sample_vertex_from_mesh(vertex, facet, colors=None, rnd_idxs=None, u=None, v=None, num_samples=2048):
-    vertex = vertex * 1e2
+    scale = np.max(np.abs(vertex))
+    vertex = vertex / scale
     triangles = np.take(vertex, facet, axis=0)
     if colors is not None:
         trianlges_color = np.take(colors, facet, axis=0)
@@ -14,7 +15,7 @@ def sample_vertex_from_mesh(vertex, facet, colors=None, rnd_idxs=None, u=None, v
     if np.sum(triangle_areas) < 1e-7:
         warnings.warn('Warning: not a good triangle mesh')
         idx = np.random.randint(0, vertex.shape[0], (num_samples,))
-        return vertex[idx] / 1e2
+        return vertex[idx] * scale
     probs = triangle_areas / np.sum(triangle_areas)
 
     if rnd_idxs is None:
@@ -30,7 +31,7 @@ def sample_vertex_from_mesh(vertex, facet, colors=None, rnd_idxs=None, u=None, v
     u[mask] = 1 - u[mask]
     v[mask] = 1 - v[mask]
     w = 1 - (u + v)
-    pts = (vx * u + vy * v + vz * w) / 1e2
+    pts = (vx * u + vy * v + vz * w) * scale
     if colors is not None:
         c = (cx * u + cy * v + cz * w)
         return pts, c, rnd_idxs, u, v
