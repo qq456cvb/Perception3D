@@ -34,9 +34,15 @@ def sample_vertex_from_mesh(vertex, facet, colors=None, rnd_idxs=None, u=None, v
 
 
 def read_off(file):
-    if 'OFF' != file.readline().strip():
-        raise('Not a valid OFF header')
-    n_verts, n_faces, _ = tuple([int(s) for s in file.readline().strip().split(' ')])
+    line = file.readline().strip()
+    if 'OFF' != line:
+        if line[:3] != 'OFF':
+            raise('Not a valid OFF header')
+        else:
+            info = line[3:]
+    else:
+        info = file.readline().strip()
+    n_verts, n_faces, _ = tuple([int(s) for s in info.split(' ')])
     verts = [[float(s) for s in file.readline().strip().split(' ')] for _ in range(n_verts)]
     faces = [[int(s) for s in file.readline().strip().split(' ')][1:] for _ in range(n_faces)]
     return np.asarray(verts), np.asarray(faces)
