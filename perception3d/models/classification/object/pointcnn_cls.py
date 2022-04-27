@@ -120,7 +120,7 @@ class Xconv(nn.Module):
         )
         self.elu = nn.ELU(inplace=True)
 
-    def forward(self,P,Feat):
+    def forward(self,P,feat):
         """
         P: [B,N,3]
         Feat: [B,N,f]
@@ -129,24 +129,24 @@ class Xconv(nn.Module):
         if self.p == 0:
             self.p = P.shape[1]
         centroid = rps(P,self.p)
-        Point,Feat = knn(point=P,feat=Feat,centroid=centroid,p=self.p,K=self.k,D=self.d)
+        point,feat = knn(point=P,feat=feat,centroid=centroid,p=self.p,K=self.k,D=self.d)
         # P: [B,P,K,3]
         # Feat: [B,P,K,f]
-        Point = Point.permute(0,3,1,2)
+        point = point.permute(0,3,1,2)
         # P: [B,3,P,K]
-        if Feat == None:
-            Feat = self.conv1(Point).permute(0,2,3,1)
+        if feat == None:
+            feat = self.conv1(point).permute(0,2,3,1)
         else:
-            F_delta = self.conv1(Point).permute(0,2,3,1)
-            Feat = torch.cat([Feat,F_delta],dim=-1)
+            F_delta = self.conv1(point).permute(0,2,3,1)
+            feat = torch.cat([feat,F_delta],dim=-1)
             # Step 1 concatenation finished
         
         # Feat: [B,P,K,f]
         # P: [B,3,P,K]
-        Point = Point.permute(0,2,3,1)
-        Point = Point.reshape(Point.shape[0],Point.shape[1],-1).transpose(2,1)
+        point = point.permute(0,2,3,1)
+        point = point.reshape(point.shape[0],point.shape[1],-1).transpose(2,1)
         # P: [B,3K,P]
-        X = self.bn2(self.elu(self.conv2(Point)))
+        X = self.bn2(self.elu(self.conv2(point)))
         X = X.transpose(2,1).reshape(-1,self.p,self.k,self.k).permute(0,3,1,2).reshape(-1,self.k,self.p*self.k)
         # X: [B,P,K,K]
         X = self.bn3(self.elu(self.conv3(X)))
@@ -156,14 +156,14 @@ class Xconv(nn.Module):
         # X: [B,P,K,K]
         # Step 2 X generation
 
-        Feat = torch.matmul(X,Feat)
+        feat = torch.matmul(X,feat)
         # Feat: [B,p,k,f]
-        Feat = Feat.transpose(2,1) # Feat: [B,k,p,f]
-        Feat = self.conv4(Feat).transpose(2,1).reshape(batch_size,self.p,-1).transpose(2,1) # Feat: [B,2*f,p]
-        Feat = self.conv5(Feat).transpose(2,1)
+        feat = feat.transpose(2,1) # Feat: [B,k,p,f]
+        feat = self.conv4(feat).transpose(2,1).reshape(batch_size,self.p,-1).transpose(2,1) # Feat: [B,2*f,p]
+        feat = self.conv5(feat).transpose(2,1)
         # Feat: [B,p,c2]
         # Step 3 Conv(K,F)
-        return centroid, Feat
+        return centroid, feat
 
 
 class PointCNNModule(nn.Module):
@@ -191,20 +191,20 @@ class PointCNNModule(nn.Module):
     def forward(self,**inputs):
         x = inputs['points']
         if self.f == 0:
-            Feat = None
+            feat = None
         else:
-            Feat = inputs['features']
+            feat = inputs['features']
         # x.shape = [B,N,3]
-        P,Feat = self.xc1(x,Feat)
-        P,Feat = self.xc2(P,Feat)
-        P,Feat = self.xc3(P,Feat)
-        _,Feat = self.xc4(P,Feat)
-        batch_size = Feat.shape[0]
-        Feat = Feat.transpose(2,1)
-        Feat = self.fc(Feat)
-        Feat = torch.mean(Feat,dim=-1)
+        P,feat = self.xc1(x,feat)
+        P,feat = self.xc2(P,feat)
+        P,feat = self.xc3(P,feat)
+        _,feat = self.xc4(P,feat)
+        batch_size = feat.shape[0]
+        feat = feat.transpose(2,1)
+        feat = self.fc(feat)
+        feat = torch.mean(feat,dim=-1)
         # Feat.shape = [B,num_class]
-        return Feat
+        return feat
 
 
 class PointCNN(nn.Module):
@@ -221,4 +221,3 @@ class PointCNN(nn.Module):
         features = self.encoder(**input)
         label_logit = features
         return {'pred_label_logit': label_logit}
-    
