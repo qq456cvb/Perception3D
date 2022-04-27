@@ -36,7 +36,7 @@ def rps(pointcloud,p):
     # [B,p,3]
     return centroid
 
-def knn(Point,Feat,centroid,p,K,D):
+def knn(point,feat,centroid,p,K,D):
     """
     Point: [B,N,3]
     Feat: [B,N,f]
@@ -48,25 +48,24 @@ def knn(Point,Feat,centroid,p,K,D):
         Point: [B,p,K,3]
         Feat: [B,p,K,f]
     """
-    batch_size,_,_ = Point.shape
-    dist = square_distance(centroid=centroid,pointcloud=Point)
+    batch_size,_,_ = point.shape
+    dist = square_distance(centroid=centroid,pointcloud=point)
     # dist: [B,P,N]
     _,g = torch.topk(dist,K*D,dim=-1,largest=False,sorted=False)
     # g: [B,P,K*D]
-    idx = torch.randperm(K*D,dtype=torch.long).to(Point.device)[:K].view(1,1,K).repeat(batch_size,p,1)
+    idx = torch.randperm(K*D,dtype=torch.long).to(point.device)[:K].view(1,1,K).repeat(batch_size,p,1)
     g = torch.gather(g,-1,idx).view(batch_size,p,K,1)
     # g: [B,P,K]
-    Point = Point.view(batch_size,1,-1,3).repeat(1,p,1,1)
+    point = point.view(batch_size,1,-1,3).repeat(1,p,1,1)
     # Point: [B, P, N, 3]
-    Point = torch.gather(Point,2,g.repeat(1,1,1,3))
+    point = torch.gather(point,2,g.repeat(1,1,1,3))
     centroid = centroid.view(batch_size,p,1,3).repeat(1,1,K,1)
-    Point = Point - centroid
+    point = point - centroid
     # Feat
-    if Feat != None:
-        Feat = Feat.reshape(batch_size,1,-1,Feat.shape[-1]).repeat(1,p,1,1)
-        Feat = torch.gather(Feat,2,g.repeat(1,1,1,Feat.shape[-1]))
-    return Point,Feat
-
+    if feat != None:
+        feat = feat.reshape(batch_size,1,-1,feat.shape[-1]).repeat(1,p,1,1)
+        feat = torch.gather(feat,2,g.repeat(1,1,1,feat.shape[-1]))
+    return point,feat
 
 
 class Xconv(nn.Module):
@@ -130,7 +129,7 @@ class Xconv(nn.Module):
         if self.p == 0:
             self.p = P.shape[1]
         centroid = rps(P,self.p)
-        Point,Feat = knn(Point=P,Feat=Feat,centroid=centroid,p=self.p,K=self.k,D=self.d)
+        Point,Feat = knn(point=P,feat=Feat,centroid=centroid,p=self.p,K=self.k,D=self.d)
         # P: [B,P,K,3]
         # Feat: [B,P,K,f]
         Point = Point.permute(0,3,1,2)
@@ -208,8 +207,6 @@ class PointCNNModule(nn.Module):
         return Feat
 
 
-
-
 class PointCNN(nn.Module):
     def __init__(self,feature,num_class):
         """
@@ -224,3 +221,4 @@ class PointCNN(nn.Module):
         features = self.encoder(**input)
         label_logit = features
         return {'pred_label_logit': label_logit}
+    
